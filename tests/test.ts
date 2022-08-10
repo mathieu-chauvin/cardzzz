@@ -1,7 +1,8 @@
 import * as web3 from '@solana/web3.js';
+import { createMint, getOrCreateAssociatedTokenAccount, mintTo, transfer } from '@solana/spl-token';
 
 import {expect} from 'chai';
-import exp from 'constants';
+//import exp from 'constants';
 import 'mocha';
 //import { sign } from 'crypto';
 //console.log(solanaWeb3);
@@ -21,8 +22,8 @@ describe("escrow", ()=>{
     /*for (let entry in controllerKeypair.publicKey.toBytes().entries()) {
         console.log(entry);
     }*/
-    const arr = [...controllerKeypair.publicKey.toBytes()];
-    console.log(arr);
+    //const arr = [...controllerKeypair.publicKey.toBytes()];
+    //console.log(arr);
     let connection = new web3.Connection(
         'http://localhost:8899',
         'confirmed',
@@ -54,22 +55,75 @@ describe("escrow", ()=>{
     console.log('chest_b_a');
     console.log(chest_b_a[0].toBase58());
 
+    const fromWallet = alice;
+    const toWallet = bob;
+
+    let mint;
+
+
 
     // alice put sol in chest
     it("initialize account a", async () => {
+
+         // airdrop 5 sol to alice
+
+
+         let airdropSignature = await connection.requestAirdrop(alice.publicKey, 5 * web3.LAMPORTS_PER_SOL);
+         const latestBlockhash = await connection.getLatestBlockhash('confirmed');
+     
+         await connection.confirmTransaction({
+             signature:airdropSignature,
+             blockhash:latestBlockhash.blockhash,
+             lastValidBlockHeight:latestBlockhash.lastValidBlockHeight
+         });
+
+         console.log('before mint');
+        const mint = await createMint(connection, alice, alice.publicKey, null, 0);
+        //const pda_nft_account = await getOrCreateAssociatedTokenAccount(connection, alice.publicKey, chest_a_b[0]);
+
+
+        const chest_mint_pda = web3.PublicKey.findProgramAddressSync([Buffer.from("chest"), mint.toBuffer()],programKey);
+
+        console.log('mint');
+        // Get the token account of the fromWallet address, and if it does not exist, create it
+        const fromTokenAccount = await getOrCreateAssociatedTokenAccount(
+            connection,
+            fromWallet,
+            mint,
+            fromWallet.publicKey
+        );
+        console.log('fromTokenAccount');
+
+        // Get the token account of the toWallet address, and if it does not exist, create it
+        const toTokenAccount = await getOrCreateAssociatedTokenAccount(connection, fromWallet, mint, toWallet.publicKey);
+
+        console.log('toTokenAccount');
+        // Mint 1 new token to the "fromTokenAccount" account we just created
+        let signature = await mintTo(
+            connection,
+            fromWallet,
+            mint,
+            fromTokenAccount.address,
+            fromWallet.publicKey,
+            1
+        );
+        console.log('mint tx:', signature);
+
+            // Transfer the new token to the "toTokenAccount" we just created
+        signature = await transfer(
+            connection,
+            fromWallet,
+            fromTokenAccount.address,
+            toTokenAccount.address,
+            fromWallet.publicKey,
+            1
+        );
+
+
+
         
 
-        // airdrop 5 sol to alice
-
-
-        let airdropSignature = await connection.requestAirdrop(alice.publicKey, 5 * web3.LAMPORTS_PER_SOL);
-        const latestBlockhash = await connection.getLatestBlockhash('confirmed');
-    
-        await connection.confirmTransaction({
-            signature:airdropSignature,
-            blockhash:latestBlockhash.blockhash,
-            lastValidBlockHeight:latestBlockhash.lastValidBlockHeight
-        });
+       
 
         let airdropSignature2 = await connection.requestAirdrop(controllerKeypair.publicKey, 1 * web3.LAMPORTS_PER_SOL);
         const latestBlockhash2 = await connection.getLatestBlockhash('confirmed');
@@ -117,46 +171,41 @@ describe("escrow", ()=>{
 
     it("bob put sol in chest", async () => {
 
-       // airdrop 5 sol to alice
+        const amount = 10000000;
+        const interest = 100;
+        const duration = 10;
+
+        const pkey = web3.PublicKey.createWithSeed(alice.publicKey, "offer",programKey;)
+        const transactionCreateAccount().add(
+            web3.SystemProgram.createAccountWithSeed({
+                fromPubkey:alice.publicKey,
+
+            })
+        )
+
+        const instruction_data = Uint8Array.from([amount,interest,duration]);
+
+        const transaction = new web3.Transaction().add(
+            new web3.TransactionInstruction({
+                programId:programKey,
+                keys:[
+                    {pubkey:bob.publicKey, isSigner:true, isWritable:false},
+                    {pubkey:alice.publicKey, isSigner:false, isWritable:true},
+                    {pubkey:web3.SystemProgram.programId, isSigner:false, isWritable:false},
+                    {pubkey:mint, isSigner:false, isWritable:true},
+                ],
+                data:Buffer.from(instruction_data),
+            }),
+        );
+        await web3.sendAndConfirmTransaction(connection,transaction,[bob]);
 
 
-       let airdropSignature = await connection.requestAirdrop(bob.publicKey, 5 * web3.LAMPORTS_PER_SOL);
-       const latestBlockhash = await connection.getLatestBlockhash('confirmed');
-   
-       await connection.confirmTransaction({
-           signature:airdropSignature,
-           blockhash:latestBlockhash.blockhash,
-           lastValidBlockHeight:latestBlockhash.lastValidBlockHeight
-       });
+
        
        
-
-       const instruction_data_1 = Uint8Array.from([1,chest_b_a[1]]);
-
-       const transaction1 = new web3.Transaction().add(
-           new web3.TransactionInstruction({
-               programId:programKey,
-               keys:[
-                   {pubkey:alice.publicKey, isSigner:false, isWritable:false},
-                   {pubkey:bob.publicKey, isSigner:true, isWritable:true},
-                   {pubkey:web3.SystemProgram.programId, isSigner:false, isWritable:false},
-                   {pubkey:chest_b_a[0], isSigner:false, isWritable:true},
-               ],
-               data:Buffer.from(instruction_data_1),
-
-           }),
-           web3.SystemProgram.transfer({fromPubkey:bob.publicKey, toPubkey:chest_b_a[0], lamports:web3.LAMPORTS_PER_SOL})
-       );
-
-       await web3.sendAndConfirmTransaction(connection,transaction1,[bob]);
        
 
-       console.log('transaction1 finished');
-       
-
-       const programBalance = await connection.getBalance(chest_b_a[0]);
-
-       expect(programBalance).to.equal(1*web3.LAMPORTS_PER_SOL+await connection.getMinimumBalanceForRentExemption(1));
+        //const programBalance = await connection.getBalance();
 
     });
 

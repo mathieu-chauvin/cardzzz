@@ -6,18 +6,96 @@ pub fn process_instruction(program_id:&Pubkey, accounts:&[AccountInfo], instruct
 
     let accountiter = &mut accounts.iter();
 
-    let source = next_account_info(accountiter)?;
-    let destination = next_account_info(accountiter)?;
-
     
-    let system_program_info = next_account_info(accountiter)?;
 
 
     let choice = instruction_data[0];
 
+    // alice always initialize
+    if choice == 0{
+        let amount = instruction_data[1];
+        let duration = instruction_data[2];
 
-    // initialize the PDA account
-    if choice == 0 {
+        let borrower = next_account_info(accountiter)?;
+
+        // alice has put her nft
+
+        let nft_account = next_account_info(accountiter)?;
+
+        // alice creates an account with what she needs : amount, duration
+
+        // do we need a program for that ? not sure
+
+
+    }
+
+    // bob puts offer
+    if choice == 1 {
+
+        let amount = instruction_data[1];
+        let duration = instruction_data[2];
+        let interest = instruction_data[3];
+
+        let borrower = next_account_info(accountiter)?;
+        let lender = next_account_info(accountiter)?;
+
+        // pda chest depends on the mint nft and on lender adress (or on offer ?)
+        let pda_chest = next_account_info(accountiter)?;
+
+        // check if nft is in correct pda token account
+
+        let nft_account = next_account_info(accountiter)?;
+
+        let nft_account_pubkey = nft_account.key;
+
+        //registers interest 
+        // create a new offer with reply
+        // countaining reference to offer, interest
+
+        // put sol in pda chest
+        let sol_account = next_account_info(accountiter)?;
+        let sol_account_pubkey = sol_account.key;
+        let sol_account_balance = sol_account.data.borrow().len();
+        if sol_account_balance != 0 {
+            return Err(ProgramError::InvalidArgument);
+        }
+
+        // need a cancel system for bob
+
+        // also for alice if she wants to get back her NFT
+
+        // -> lots of verifications
+
+        // after that alice accepts the offer. The NFT is blocked and she gets the money
+
+        // bob can claim nft if > to limit days
+
+        //alice can claim nft back if she puts exact amount in pda related to offer
+        // the nft gains value
+
+        //bob has to claim the money back with interest
+        
+        //finish !
+
+
+        
+
+        
+        let system_program_info = next_account_info(accountiter)?;
+
+    
+
+        let bump_seed_a_b = instruction_data[1];
+
+        let pda_expected_a_b = Pubkey::create_program_address(&[b"chest",source.key.as_ref(),destination.key.as_ref(),&[bump_seed_a_b]], program_id).unwrap();
+        msg!("pda_expected_a_b: {:?}", pda_expected_a_b);
+        assert_eq!(&pda_expected_a_b, pda_account_info_a_b.key);
+
+        let pda_account_info_b_a = next_account_info(accountiter)?;
+
+        let bump_seed_b_a = instruction_data[2];
+
+
 
         let pda_account_info_a_b = next_account_info(accountiter)?;
         msg!("initializing account a");

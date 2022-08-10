@@ -1,0 +1,33 @@
+{
+  "name": "SolCredit cards",
+  "symbol": "SCC",
+  "description": "There are cards to make loans",
+  "seller_fee_basis_points": 500,
+  "image": "image.png",
+  "external_url": "https://yourwebsite.com/details/0",
+  "attributes": [
+    {
+      "value": "Bronze",
+      "trait_type": "COLOR"
+    }
+  ],
+  "collection": {
+    "name": "SolCredit cards",
+    "family": "Solana Financial NFTs by Cypher"
+  },
+  "properties": {
+    "files": [
+      {
+        "uri": "image.png",
+        "type": "image/png"
+      }
+    ],
+    "category": "image",
+    "creators": [
+      {
+        "share": 100,
+        "address": "KMcyC5nELGSwnhRwmNmoE3Nx1HkXyJENSC44vDG3frg"
+      }
+    ]
+  }
+}
