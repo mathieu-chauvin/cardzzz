@@ -1,5 +1,6 @@
 {
   "dependencies": {
-    "@solana/web3.js": "^1.50.1"
+    "@solana/web3.js": "^1.50.1",
+    "create-react-app": "^5.0.1"
   }
 }
