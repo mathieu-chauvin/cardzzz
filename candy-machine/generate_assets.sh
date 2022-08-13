@@ -1,5 +1,5 @@
 rm assets/*
-for i in {1..200}
+for i in {0..199}
 do
 	printf '{
   "name": "SolCredit cards",
