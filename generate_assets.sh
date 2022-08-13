@@ -1,14 +1,21 @@
-{
+rm assets/*
+for i in {1..200}
+do
+	printf '{
   "name": "SolCredit cards",
   "symbol": "SCC",
-  "description": "There are cards to make loans",
+  "description": "They are cards to make loans",
   "seller_fee_basis_points": 500,
-  "image": "image.png",
-  "external_url": "https://yourwebsite.com/details/0",
+  "image": "%s.png",
+  "external_url": "https://twitter.com/math78C",
   "attributes": [
     {
       "value": "Bronze",
       "trait_type": "COLOR"
+    },
+    {
+      "value": "0",
+      "trait_type": "SCORE"
     }
   ],
   "collection": {
@@ -18,7 +25,7 @@
   "properties": {
     "files": [
       {
-        "uri": "image.png",
+        "uri": "%s.png",
         "type": "image/png"
       }
     ],
@@ -30,4 +37,6 @@
       }
     ]
   }
-}
+}' $i $i> ./assets/$i.json
+	cp ./pictures/bronze.png ./assets/$i.png
+done
