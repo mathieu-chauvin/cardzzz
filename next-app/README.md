@@ -1,34 +1,92 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# Connect with wallets in the browser
 
-## Getting Started
+In this tutorial, we will see how to connect a wallet in the browser using the [Solana Wallet Adapter Library](https://github.com/solana-labs/wallet-adapter) and the [Metaplex JS SDK](https://github.com/metaplex-foundation/js).
 
-First, run the development server:
+Once the user has connected their wallet, we will display a random NFT from their wallet and refresh it at the click of a button.
 
-```bash
-npm run dev
-# or
-yarn dev
-```
+This example has been generated using the following steps:
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+1. **Create a new project using Next.js.**
+   Let's start by spinning off a Next.js app with the Metaplex JS SDK installed. You may achieve this by [following this tutorial](https://github.com/metaplex-foundation/js-examples/tree/main/getting-started-nextjs).
 
-You can start editing the page by modifying `pages/index.js`. The page auto-updates as you edit the file.
+2. **Install the wallet adapter libraries.**
 
-[API routes](https://nextjs.org/docs/api-routes/introduction) can be accessed on [http://localhost:3000/api/hello](http://localhost:3000/api/hello). This endpoint can be edited in `pages/api/hello.js`.
+   ```sh
+   npm install @solana/wallet-adapter-base \
+      @solana/wallet-adapter-react \
+      @solana/wallet-adapter-react-ui \
+      @solana/wallet-adapter-wallets
+   ```
 
-The `pages/api` directory is mapped to `/api/*`. Files in this directory are treated as [API routes](https://nextjs.org/docs/api-routes/introduction) instead of React pages.
+3. **Create the `pages/useMetaplex.js` file.**
 
-## Learn More
+   The `useMetaplex.js` file is responsible for creating and exposing a new Metaplex Context which will be used within our components to access the Metaplex SDK.
 
-To learn more about Next.js, take a look at the following resources:
+   ```js
+   const DEFAULT_CONTEXT = {
+     metaplex: null,
+   };
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+   export const MetaplexContext = createContext(DEFAULT_CONTEXT);
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
+   export function useMetaplex() {
+     return useContext(MetaplexContext);
+   }
+   ```
 
-## Deploy on Vercel
+4. **Create the `pages/MetaplexProvider.js` file.**
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+   The `MetaplexProvider` component uses the wallet provided by the `WalletProvider` component to define the Metaplex Context previously created.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+   ```js
+   export const MetaplexProvider = ({ children }) => {
+     const { connection } = useConnection();
+     const wallet = useWallet();
+
+     const metaplex = useMemo(() => {
+       return Metaplex.make(connection).use(
+         walletOrGuestIdentity(wallet.connected ? wallet : null),
+       );
+     }, [connection, wallet]);
+
+     return (
+       <MetaplexContext.Provider value={{ metaplex }}>
+         {children}
+       </MetaplexContext.Provider>
+     );
+   };
+   ```
+
+   As you can see, it uses the `walletOrGuestIdentity` plugin so that the identity of the Metaplex SDK is set to "guest" when the wallet is not yet connected.
+
+5. **Create the `pages/ShowNFTs.js` file**
+
+   The `ShowNFTs` component is responsible for retrieving, picking and showing a random NFT from the connected wallet.
+
+   ```js
+   let myNfts = await metaplex
+     .nfts()
+     .findAllByOwner(metaplex.identity().publicKey);
+   let randIdx = Math.floor(Math.random() * myNfts.length);
+   await myNfts[randIdx].metadataTask.run();
+   setNft(myNfts[randIdx]);
+   ```
+
+   As shown here, when the user clicks the refresh button, we fetch all its NFTs and select a random one among them.
+
+   Since the JSON metadata is not loaded automatically we load it by running the following task.
+
+   ```js
+   await myNfts[randIdx].metadataTask.run();
+   ```
+
+6. **That's it!** 🎉
+   You're now ready to start building your app whilst having access to the user's wallet!
+
+   Note that now that the wallet has been integrated with the Metaplex JS SDK, you can use all of its features on behalf of the user and it will request their approval every time they need to send a transaction or sign a message.
+
+   Let's see a few screenshots of the final result!
+
+![image](https://user-images.githubusercontent.com/34144004/177217016-7b98dc84-516d-4f62-a875-9a13976ba9ce.png)
+![image](https://user-images.githubusercontent.com/34144004/177217061-343cdba2-0411-4b58-884b-8ef5de157e40.png)
+![image](https://user-images.githubusercontent.com/34144004/177217096-6c35559b-cd25-4e4b-aedc-9843210e6f43.png)
