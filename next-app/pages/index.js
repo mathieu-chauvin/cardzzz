@@ -16,13 +16,22 @@ import {
 import { clusterApiUrl } from '@solana/web3.js';
 import { MetaplexProvider } from './MetaplexProvider';
 import { ShowNFTs } from './ShowNFTs';
+import { StakeCard } from './StakeCard';
 import '@solana/wallet-adapter-react-ui/styles.css';
+
+import { Tabs } from './Tabs';
+
 
 export default function Home() {
 
   const [network, setNetwork] = useState(WalletAdapterNetwork.Devnet);
 
+  
+
+
   const endpoint = useMemo(() => clusterApiUrl(network), [network]);
+
+
 
   const wallets = useMemo(
       () => [
@@ -57,11 +66,19 @@ export default function Home() {
     <div>
       <ConnectionProvider endpoint={endpoint}>
       <WalletProvider wallets={wallets} autoConnect>
+        
         <WalletModalProvider>
         <MetaplexProvider>
           <div className={styles.App}>
+           
             <WalletMultiButton />
-            <ShowNFTs onClusterChange={handleChange} />
+            <select onChange={handleChange} className={styles.dropdown}>
+              <option value="devnet">Devnet</option>
+              <option value="mainnet">Mainnet</option>
+              <option value="testnet">Testnet</option>
+            </select>
+            <Tabs/>
+            
           </div>
         </MetaplexProvider>
         </WalletModalProvider>
