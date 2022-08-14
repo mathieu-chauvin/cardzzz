@@ -14,12 +14,10 @@ import {
     WalletMultiButton
 } from '@solana/wallet-adapter-react-ui';
 import { clusterApiUrl } from '@solana/web3.js';
-import { MetaplexProvider } from './MetaplexProvider';
-import { ShowNFTs } from './ShowNFTs';
-import { StakeCard } from './StakeCard';
+import { MetaplexProvider } from '../components/MetaplexProvider';
 import '@solana/wallet-adapter-react-ui/styles.css';
 
-import { Tabs } from './Tabs';
+import { Tabs } from '../components/Tabs';
 
 
 export default function Home() {
