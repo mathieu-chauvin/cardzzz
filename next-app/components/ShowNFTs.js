@@ -9,6 +9,8 @@ export const ShowNFTs = (props) => {
     const nft = props.nft;
 
     const onClick = async () => {
+
+        console.log("looking for nft");
         let myNfts = await metaplex.nfts().findAllByOwner(metaplex.identity().publicKey);
         if(!myNfts.length) {
           props.onNftChange(null);
@@ -39,6 +41,7 @@ export const ShowNFTs = (props) => {
                   src={nft.metadata.image || '/fallbackImage.jpg'}
                   alt="The downloaded illustration of the provided NFT address."
                 />
+                <p>Interest rate : 0%</p>
               </div>
             )}
           </div>

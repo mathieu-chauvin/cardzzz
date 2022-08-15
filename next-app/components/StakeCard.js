@@ -1,16 +1,22 @@
 import styles from '../styles/Home.module.css'
 import { useMetaplex } from "./useMetaplex";
 import { useState } from "react";
-import { useWallet } from '@solana/wallet-adapter-react';
+import { useConnection, useWallet } from '@solana/wallet-adapter-react';
 import * as web3 from "@solana/web3.js";
 import * as spl from "@solana/spl-token";
 
 export const StakeCard = (props) => {
     const { metaplex } = useMetaplex();
-    const wallet = useWallet();
+    const { connection } = useConnection();
+    const { connected, publicKey, sendTransaction, signTransaction } = useWallet();
+
+    const connectionC = new web3.Connection('https://api.devnet.solana.com')
     const nft = props.nft;
     const [amount, setAmount] = useState(0);
     const [date, setDate] = useState(0);
+
+    const [staked, setStaked] = useState(false);
+
 
 
 
@@ -35,49 +41,117 @@ export const StakeCard = (props) => {
     }
 
     const stakeNFT = async () => {
-        let myNfts = await metaplex.nfts().findAllByOwner(metaplex.identity().publicKey);
+        /*let myNfts = await metaplex.nfts().findAllByOwner(metaplex.identity().publicKey);
         if(!myNfts.length) {
             setNft(null);
             return;
         }
-        wallet.sendTransaction(web3.Instruction.createAccount(myNfts[0].mint, myNfts[0].mint, 100));
+        wallet.sendTransaction(web3.Instruction.createAccount(myNfts[0].mint, myNfts[0].mint, 100));*/
 
-        const pda = web3.SystemProgram.createAccountWithSeed
 
         //create an associated account for the NFT owned by the program
-        const transaction1 = new web3.Transaction().add(
-          new web3.TransactionInstruction({
-              programId:programKey,
-              keys:[
-                  {pubkey:alice.publicKey, isSigner:true, isWritable:false},
-                  {pubkey:bob.publicKey, isSigner:false, isWritable:true},
-                  {pubkey:web3.SystemProgram.programId, isSigner:false, isWritable:false},
-                  {pubkey:chest_a_b[0], isSigner:false, isWritable:true},
-              ],
-              data:Buffer.from(instruction_data_1),
 
-          }),
-          spl.transfer(connection, wallet.publicKey,wallet.publicKey, pda, wallet.publicKey, 1)
-          //web3.SystemProgram.transfer({fromPubkey:alice.publicKey, toPubkey:chest_a_b[0], lamports:web3.LAMPORTS_PER_SOL})
-      );
+        const tempXTokenAccountKeypair = new web3.Keypair();
+
+        const borrower_token_account_pubkey = nft.address;
+
+        const XTokenMintPubkey = nft.mint;
+        console.log(XTokenMintPubkey);
+
+        console.log("construct transaction");
+
         
-        const instr = web3.Instruction.createAccount(myNfts[0].mint, myNfts[0].mint, 100);
 
-
-       // web3.Instruction.
-        const tempTokenAccount = new Account();
-        const createTempTokenAccountIx = SystemProgram.createAccount({
-            programId: TOKEN_PROGRAM_ID,
-            space: AccountLayout.span,
-            lamports: await connection.getMinimumBalanceForRentExemption(AccountLayout.span, 'confirmed'),
-            fromPubkey: feePayerAcc.publicKey,
-            newAccountPubkey: tempTokenAccount.publicKey
+        const createTempTokenAccountIx = web3.SystemProgram.createAccount({
+              programId: spl.TOKEN_PROGRAM_ID,
+              space: spl.AccountLayout.span,
+              lamports: await connection.getMinimumBalanceForRentExemption(
+                spl.AccountLayout.span
+              ),
+              fromPubkey: publicKey,
+              newAccountPubkey: tempXTokenAccountKeypair.publicKey,
         });
+
+        console.log(nft.mint);
+        
+        const initTempAccountIx = spl.createInitializeAccountInstruction(
+
+            tempXTokenAccountKeypair.publicKey,
+            XTokenMintPubkey,
+            publicKey,
+            spl.TOKEN_PROGRAM_ID
+            
+        );
+
+        const transferXTokensToTempAccIx = spl.createTransferInstruction(
+            
+            borrower_token_account_pubkey,
+            tempXTokenAccountKeypair.publicKey,
+            publicKey,
+            1,
+            [],
+            spl.TOKEN_PROGRAM_ID,
+        );
+
+        const tx = new web3.Transaction().add(
+          createTempTokenAccountIx,
+          initTempAccountIx,
+          transferXTokensToTempAccIx
+        );
+        
+        console.log(connection);
+        tx.recentBlockhash= await (await connection.getLatestBlockhash('finalized')).blockhash; 
+        tx.feePayer = publicKey;
+
+        //tx.sign(tempXTokenAccountKeypair);
+
+        console.log(tx.recentBlockhash);
+        console.log("Sending Alice's transaction...");
+
+        let signature = '';
+        try {
+            const transaction = tx;
+            const transactionT = new web3.Transaction();
+
+            const signed = await signTransaction(tx);
+            console.log('signed');
+            // now sign with the tokenAccount
+            signed.partialSign(tempXTokenAccountKeypair);
+
+            signature = await sendTransaction(transaction, connection);
+            
+
+            console.log('info', 'Transaction sent:', signature);
+
+            //await connection.confirmTransaction(signature, 'processed');
+            console.log('success', 'Transaction successful!', signature);
+        } catch (error) {
+            console.log('error', `Transaction failed! ${error?.message}`, signature);
+            return;
+        }
+
+        console.log("finished stake NFT");
+          
+        //await wallet.signTransaction(tx);
+
+        /*await wallet.sendTransaction(
+          tx,
+          connection.connection
+        );*/
+        //[wallet.publicKey, tempXTokenAccountKeypair.publicKey]
+
+        //spl.transfer(connection, wallet.publicKey,wallet.publicKey, pda, wallet.publicKey, 1)
+        //web3.SystemProgram.transfer({fromPubkey:alice.publicKey, toPubkey:chest_a_b[0], lamports:web3.LAMPORTS_PER_SOL})
+    
+      
+        //const instr = web3.Instruction.createAccount(myNfts[0].mint, myNfts[0].mint, 100);
+
+
 
     };
 
 
-    return wallet.connected && (
+    return connected && (
       <div>
         
         <div>
@@ -106,7 +180,7 @@ export const StakeCard = (props) => {
                 
               />
 
-            <button onClick={onClick}>Stake Card</button>
+            <button onClick={onClick}>Stake Card & Ask for loan</button>
             </div>
             
           </div>

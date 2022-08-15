@@ -1,6 +1,9 @@
 {
   "dependencies": {
+    "@solana/spl-token": "^0.3.0",
     "@solana/web3.js": "^1.50.1",
-    "create-react-app": "^5.0.1"
+    "chai": "^4.3.6",
+    "create-react-app": "^5.0.1",
+    "mocha": "^10.0.0"
   }
 }

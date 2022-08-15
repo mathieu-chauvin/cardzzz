@@ -24,7 +24,6 @@ pub fn process_instruction(program_id:&Pubkey, accounts:&[AccountInfo], instruct
 
         // alice creates an account with what she needs : amount, duration
 
-        // do we need a program for that ? not sure
 
 
     }
@@ -295,6 +294,80 @@ pub fn process_instruction(program_id:&Pubkey, accounts:&[AccountInfo], instruct
         **winner_account.try_borrow_mut_lamports()? += amount_b_a;
 
     }
+
+    else if choice ==4 {
+        //get back the nft, send the money to the lender
+
+        /*let transfer_to_initializer_ix = spl_token::instruction::transfer(
+            token_program.key,
+            takers_sending_token_account.key,
+            initializers_token_to_receive_account.key,
+            taker.key,
+            &[&taker.key],
+            escrow_info.expected_amount,
+        )?;
+        msg!("Calling the token program to transfer tokens to the escrow's initializer...");
+        invoke(
+            &transfer_to_initializer_ix,
+            &[
+                takers_sending_token_account.clone(),
+                initializers_token_to_receive_account.clone(),
+                taker.clone(),
+                token_program.clone(),
+            ],
+        )?;*/
+    }
+
+    else if choice == 5 {
+        //claim the nft back in case of no paying
+
+        /*let transfer_to_taker_ix = spl_token::instruction::transfer(
+            token_program.key,
+            pdas_temp_token_account.key,
+            takers_token_to_receive_account.key,
+            &pda,
+            &[&pda],
+            pdas_temp_token_account_info.amount,
+        )?;
+        msg!("Calling the token program to transfer tokens to the taker...");
+        invoke_signed(
+            &transfer_to_taker_ix,
+            &[
+                pdas_temp_token_account.clone(),
+                takers_token_to_receive_account.clone(),
+                pda_account.clone(),
+                token_program.clone(),
+            ],
+            &[&[&b"escrow"[..], &[nonce]]],
+        )?;
+
+        let close_pdas_temp_acc_ix = spl_token::instruction::close_account(
+            token_program.key,
+            pdas_temp_token_account.key,
+            initializers_main_account.key,
+            &pda,
+            &[&pda],
+        )?;
+        msg!("Calling the token program to close pda's temp account...");
+        invoke_signed(
+            &close_pdas_temp_acc_ix,
+            &[
+                pdas_temp_token_account.clone(),
+                initializers_main_account.clone(),
+                pda_account.clone(),
+                token_program.clone(),
+            ],
+            &[&[&b"escrow"[..], &[nonce]]],
+        )?;
+
+        msg!("Closing the escrow account...");
+        **initializers_main_account.try_borrow_mut_lamports()? = initializers_main_account
+            .lamports()
+            .checked_add(escrow_account.lamports())
+            .ok_or(EscrowError::AmountOverflow)?;
+        **escrow_account.try_borrow_mut_lamports()? = 0;
+        *escrow_account.try_borrow_mut_data()? = &mut [];*/
+    })
 
     // special : reset controller account by substracting all the lamports from it 
     // only use when necessary
