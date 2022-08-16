@@ -32,13 +32,13 @@ export const Tabs = (props) =>  {
                   <TabList onChange={handleChangeV} aria-label="lab API tabs example">
                     <Tab label="Borrow" value="1" />
                     <Tab label="Lend" value="2" />
-                    <Tab label="Reimburse" value="3" />
+                    <Tab label="Repayment" value="3" />
                   </TabList>
                 </Box>
                 <TabPanel value="1">
                             
                     <ShowNFTs nft={nft} onNftChange={(nft) => setNft(nft)} />
-                    {!staked && (<StakeCard nft={nft} />)}
+                    {nft && (<StakeCard nft={nft} />)}
 
                 </TabPanel>
                 <TabPanel value="2">

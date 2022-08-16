@@ -15,13 +15,18 @@ import * as web3 from '@solana/web3.js';
 
 
 
-export const DataTable= (props) => {
+export const DataTable2= (props) => {
 
 
   const { connection } = useConnection();
   const { connected, publicKey, sendTransaction, signTransaction } = useWallet();
 
 
+  const [rows, setRows] = useState([
+    { id:'1', nft: 'GyZvmjUdFQSRjixEvySFpViiLjzXuGX9T282BUfFzU7N', owner: 'KGE7DqaQXDN7hfhMshCgisNXzKD2GEZffc3YENNRdjQd', type_card:'SILVER', amount: 3, interest: 2 },
+    { id:'2', nft: '8ED7exrYJo3Bm8bpiUs67pEQHh8EbziMDZLFFqcMgsHT', owner: 'KMcyC5nELGSwnhRwmNmoE3Nx1HkXyJENSC44vDG3frg', type_card:'BRONZE', amount: 0.5, interest: 3.5 },
+    
+  ]);
 
 
   const columns = [
@@ -90,7 +95,11 @@ export const DataTable= (props) => {
               console.log('error', `Transaction failed! ${error?.message}`, signature);
               return;
           }
-  
+          setRows([{ id:'1', nft: 'GyZvmjUdFQSRjixEvySFpViiLjzXuGX9T282BUfFzU7N', owner: 'KGE7DqaQXDN7hfhMshCgisNXzKD2GEZffc3YENNRdjQd', type_card:'SILVER', amount: 3, interest: 2 },
+        ]);
+        props.onChangeAL([{ id:'2', nft: '8ED7exrYJo3Bm8bpiUs67pEQHh8EbziMDZLFFqcMgsHT', owner: 'KMcyC5nELGSwnhRwmNmoE3Nx1HkXyJENSC44vDG3frg', type_card:'BRONZE', amount: 0.5, interest: 3.5 }],
+        );
+        
           return;
 
           
@@ -116,7 +125,7 @@ export const DataTable= (props) => {
   return (
     <div style={{ height: 400, width: '100%' }}>
       <DataGrid
-        rows={props.rows}
+        rows={rows}
         columns={columns}
         pageSize={5}
         rowsPerPageOptions={[5]}

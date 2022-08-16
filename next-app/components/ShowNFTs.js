@@ -116,7 +116,7 @@ export const ShowNFTs = (props) => {
                   alt="The downloaded illustration of the provided NFT address."
                   style={{ maxWidth: '70%' }}
                 />
-                <p>Interest rate : 3.5%</p>
+                <p>Interest rate : 3.5% per month</p>
               </div>
             )}
           </div>

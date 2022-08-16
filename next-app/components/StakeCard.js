@@ -118,7 +118,7 @@ export const StakeCard = (props) => {
 
         console.log('amount', amount);
         
-        const initEscrowIx = new web3.TransactionInstruction({
+        /*const initEscrowIx = new web3.TransactionInstruction({
           programId: programId,
           keys: [
             { pubkey: publicKey, isSigner: true, isWritable: false },
@@ -134,7 +134,7 @@ export const StakeCard = (props) => {
           data: Buffer.from(
             Uint8Array.of(0, ...new BN(amount).toArray("le", 8))
           ),
-        });
+        });*/
 
 
         const tx = new web3.Transaction().add(
@@ -143,6 +143,7 @@ export const StakeCard = (props) => {
           transferXTokensToTempAccIx,
           //createEscrowAccountIx,
           //initEscrowIx
+          
         );
         
         console.log(connection);
@@ -180,13 +181,13 @@ export const StakeCard = (props) => {
             return;
         }
 
-        const transaction2 = new web3.Transaction().add(createEscrowAccountIx,initEscrowIx);
+        /*const transaction2 = new web3.Transaction().add(createEscrowAccountIx,initEscrowIx,);
         transaction2.recentBlockhash= (await connection.getLatestBlockhash('finalized')).blockhash; 
         console.log(transaction2.recentBlockhash);
-        transaction2.feePayer = publicKey;
+        transaction2.feePayer = publicKey;*/
 
 
-       try {
+       /*try {
 
           
 
@@ -205,9 +206,10 @@ export const StakeCard = (props) => {
       } catch (error) {
           console.log('error', `Transaction failed! ${error?.message}`, signature2);
           return;
-      }
+      }*/
 
         console.log("finished stake NFT");
+        setStaked(true);
           
         //await wallet.signTransaction(tx);
 
@@ -232,24 +234,34 @@ export const StakeCard = (props) => {
       <div>
         
         <div>
-          <div className={styles.container}>
-            <h1 className={styles.title}>Enter the amount you'd like to borrow</h1>
-            <div className={styles.nftForm}>
-              
-              <h3 className={styles.title}>Amount (in SOL)</h3>
-              <input
-                type="text"
-                value={amount}
-                onChange={handleChangeAmount}
+          
+          {!staked?
+            <div className={styles.container}>
+              <h1 className={styles.title}>Enter the amount you'd like to borrow (max duration : 1 month)</h1>
+              <div className={styles.nftForm}>
                 
-              />
+                <h3 className={styles.title}>Amount (in SOL)</h3>
+                <input
+                  type="text"
+                  value={amount}
+                  onChange={handleChangeAmount}
+                  
+                />
 
-            
+              
 
-            <button onClick={onClick}>Stake Card & Ask for loan</button>
+              <button onClick={onClick}>Stake Card & Ask for loan</button>
+              </div>
+              
             </div>
+            :
+            <div className={styles.container}>
+            <h1>This card is staked and waiting for a lender.</h1>
             
           </div>
+
+      }}
+
         </div>
       </div>
     );

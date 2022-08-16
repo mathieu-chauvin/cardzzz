@@ -15,18 +15,21 @@ import * as web3 from '@solana/web3.js';
 
 
 
-export const DataTable= (props) => {
+export const DataTableR= (props) => {
 
 
   const { connection } = useConnection();
   const { connected, publicKey, sendTransaction, signTransaction } = useWallet();
 
+  const [rows, setRows] = useState([
+    { id:'2', nft: '8ED7exrYJo3Bm8bpiUs67pEQHh8EbziMDZLFFqcMgsHT', lender: 'DMKnd938Y8gZseskBcNXW3c9SWvZXFkxHA8VhMKPpfZT', type_card:'BRONZE', amount: 0.575, interest: 3.5 },
+  ]);
 
 
 
   const columns = [
     { field: 'nft', headerName: 'NFT', width: 500 },
-    { field: 'owner', headerName: 'Owner', width: 500 },
+    { field: 'lender', headerName: 'Lender', width: 500 },
     {
       field: 'type_card',
       headerName: 'Type of card',
@@ -40,7 +43,7 @@ export const DataTable= (props) => {
     },
     {
       field: 'amount',
-      headerName: 'Amount (in SOL)',
+      headerName: 'Amount (in SOL) with interest',
       type: 'number',
       width: 150,
     },
@@ -64,11 +67,10 @@ export const DataTable= (props) => {
               (c) => (thisRow[c.field] = params.getValue(params.id, c.field))
             );
 
-            console.log(thisRow.owner);
+            console.log(thisRow.lender);
             console.log(thisRow.amount);
-            const topubkey = thisRow.owner;
 
-          const tx = new web3.Transaction().add(web3.SystemProgram.transfer({fromPubkey: publicKey, toPubkey: thisRow.owner, lamports: thisRow.amount*web3.LAMPORTS_PER_SOL}));
+          const tx = new web3.Transaction().add(web3.SystemProgram.transfer({fromPubkey: publicKey, toPubkey: thisRow.lender, lamports: thisRow.amount*web3.LAMPORTS_PER_SOL}));
           let signature = '';
           
           try {
@@ -90,8 +92,10 @@ export const DataTable= (props) => {
               console.log('error', `Transaction failed! ${error?.message}`, signature);
               return;
           }
+
+          setRows([]);
   
-          return;
+          return alert('Success');
 
           
   
@@ -107,7 +111,7 @@ export const DataTable= (props) => {
           return alert(JSON.stringify(thisRow, null, 4));*/
         };
   
-        return <Button onClick={onClick}>Lend</Button>;
+        return <Button onClick={onClick}>Reimburse</Button>;
       }
     },
   ];
@@ -115,13 +119,13 @@ export const DataTable= (props) => {
 
   return (
     <div style={{ height: 400, width: '100%' }}>
-      <DataGrid
-        rows={props.rows}
+      {rows.length ? <DataGrid
+        rows={rows}
         columns={columns}
         pageSize={5}
         rowsPerPageOptions={[5]}
         checkboxSelection
-      />
+      /> : <p>No loans to reimburse</p>}
     </div>
   );
 }
