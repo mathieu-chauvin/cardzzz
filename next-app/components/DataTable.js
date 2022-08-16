@@ -3,23 +3,30 @@ import { DataGrid } from '@mui/x-data-grid';
 import Button from '@mui/material/Button';
 
 const columns = [
-  { field: 'nft', headerName: 'NFT_address', width: 300 },
-  { field: 'owner', headerName: 'Owner adress', width: 300 },
+  { field: 'nft', headerName: 'NFT_address', width: 400 },
+  { field: 'owner', headerName: 'Owner adress', width: 400 },
   {
-    field: 'amount',
-    headerName: 'Amount',
-    type: 'number',
-    width: 90,
+    field: 'type_card',
+    headerName: 'Type of card',
+    width: 150,
   },
   {
     field: 'interest',
     headerName: 'Interest',
     type: 'number',
-    width: 90,
+    width: 150,
   },
+  {
+    field: 'amount',
+    headerName: 'Amount',
+    type: 'number',
+    width: 150,
+  },
+  
   {
     field: "action",
     headerName: "Action",
+    width:300,
     sortable: false,
     renderCell: (params) => {
       const onClick = (e) => {
@@ -38,7 +45,7 @@ const columns = [
         return alert(JSON.stringify(thisRow, null, 4));
       };
 
-      return <Button onClick={onClick}>Click</Button>;
+      return <Button onClick={onClick}>Lend</Button>;
     }
   },
 ];

@@ -30,22 +30,22 @@ export const Tabs = (props) =>  {
               <TabContext value={value}>
                 <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
                   <TabList onChange={handleChangeV} aria-label="lab API tabs example">
-                    <Tab label="Borrowing" value="1" />
-                    <Tab label="Lending" value="2" />
+                    <Tab label="Borrow" value="1" />
+                    <Tab label="Lend" value="2" />
                     <Tab label="Reimburse" value="3" />
                   </TabList>
                 </Box>
-                <TabPanel value="1">Borrowing
+                <TabPanel value="1">
                             
                     <ShowNFTs nft={nft} onNftChange={(nft) => setNft(nft)} />
                     {!staked && (<StakeCard nft={nft} />)}
 
                 </TabPanel>
-                <TabPanel value="2">Lending
+                <TabPanel value="2">
                     <ListOffers />
                 </TabPanel>
 
-                <TabPanel value="3">Reimburse
+                <TabPanel value="3">
                     <ListReimbursments/>
                 </TabPanel>
                

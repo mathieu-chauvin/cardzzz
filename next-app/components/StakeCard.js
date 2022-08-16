@@ -93,6 +93,8 @@ export const StakeCard = (props) => {
           publicKey
         );
 
+        console.log('associated'+ associatedSourceTokenAddr);
+
         const transferXTokensToTempAccIx = spl.createTransferInstruction(
             
             associatedSourceTokenAddr,
@@ -105,9 +107,9 @@ export const StakeCard = (props) => {
 
         const escrowKeypair = new web3.Keypair();
         const createEscrowAccountIx = web3.SystemProgram.createAccount({
-          space: 100,
+          space: 200,
           lamports: await connection.getMinimumBalanceForRentExemption(
-            100
+            200
           ),
           fromPubkey: publicKey,
           newAccountPubkey: escrowKeypair.publicKey,
@@ -234,7 +236,7 @@ export const StakeCard = (props) => {
             <h1 className={styles.title}>Enter the amount you'd like to borrow</h1>
             <div className={styles.nftForm}>
               
-              <h3 className={styles.title}>Amount</h3>
+              <h3 className={styles.title}>Amount (in SOL)</h3>
               <input
                 type="text"
                 value={amount}

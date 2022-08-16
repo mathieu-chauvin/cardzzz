@@ -64,7 +64,9 @@ export const ShowNFTs = (props) => {
       for (let i = 0; i < maxValue; i++) {             
           let score = Math.floor(Math.random()*700-500);
           if(score < 0){score = 0;}
-           items.push(<MenuItem value={nftList[i]}>{nftList[i].name}, Bronze (Score : {score})</MenuItem>);
+          if (nftList[i].name == 'SolCredit cards'){
+            items.push(<MenuItem value={nftList[i]}>{nftList[i].name}, Bronze (Score : {score})</MenuItem>);
+          }
            //<option key={i} value={i}>{i}</option>);   
            //here I will be creating my options dynamically based on
            //what props are currently passed to the parent component
@@ -108,10 +110,11 @@ export const ShowNFTs = (props) => {
             
             {nft && (
               <div className={styles.nftPreview}>
-                <h1>{nft.name}</h1>
+                
                 <img
                   src={nft.metadata.image || '/fallbackImage.jpg'}
                   alt="The downloaded illustration of the provided NFT address."
+                  style={{ maxWidth: '70%' }}
                 />
                 <p>Interest rate : 3.5%</p>
               </div>
