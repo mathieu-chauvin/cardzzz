@@ -5,6 +5,8 @@ import TabContext from '@mui/lab/TabContext';
 import TabList from '@mui/lab/TabList';
 import TabPanel from '@mui/lab/TabPanel';
 import { useState } from 'react';
+import {ListOffers} from './ListOffers';
+import {ListReimbursments} from './ListReimbursments';
 
 import { ShowNFTs } from './ShowNFTs';
 import { StakeCard } from './StakeCard';
@@ -30,6 +32,7 @@ export const Tabs = (props) =>  {
                   <TabList onChange={handleChangeV} aria-label="lab API tabs example">
                     <Tab label="Borrowing" value="1" />
                     <Tab label="Lending" value="2" />
+                    <Tab label="Reimburse" value="3" />
                   </TabList>
                 </Box>
                 <TabPanel value="1">Borrowing
@@ -39,10 +42,11 @@ export const Tabs = (props) =>  {
 
                 </TabPanel>
                 <TabPanel value="2">Lending
-                    <h3>Active loans</h3>
-                    <DataTable/>
-                    <h3>New possible loans</h3>
-                    <DataTable/>
+                    <ListOffers />
+                </TabPanel>
+
+                <TabPanel value="3">Reimburse
+                    <ListReimbursments/>
                 </TabPanel>
                
               </TabContext>

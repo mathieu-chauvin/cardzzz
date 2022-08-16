@@ -231,9 +231,8 @@ export const StakeCard = (props) => {
         
         <div>
           <div className={styles.container}>
-            <h1 className={styles.title}>NFT Stake program</h1>
+            <h1 className={styles.title}>Enter the amount you'd like to borrow</h1>
             <div className={styles.nftForm}>
-            <h3 className={styles.title}>NFT address</h3>
               
               <h3 className={styles.title}>Amount</h3>
               <input
@@ -243,13 +242,7 @@ export const StakeCard = (props) => {
                 
               />
 
-            <h3 className={styles.title}>Date</h3>
-              <input
-                type="text"
-                value={date}
-                onChange={handleChangeDate}
-                
-              />
+            
 
             <button onClick={onClick}>Stake Card & Ask for loan</button>
             </div>
@@ -259,3 +252,10 @@ export const StakeCard = (props) => {
       </div>
     );
 };
+/*<h3 className={styles.title}>Date</h3>
+              <input
+                type="text"
+                value={date}
+                onChange={handleChangeDate}
+                
+              />*/
