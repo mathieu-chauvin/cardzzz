@@ -43,6 +43,7 @@ export default function Home() {
   );
 
   const handleChange = (event) => {
+    console.log("hello");
     switch(event.target.value){
       case "devnet":
         setNetwork(WalletAdapterNetwork.Devnet);
@@ -68,6 +69,7 @@ export default function Home() {
         <WalletModalProvider>
         <MetaplexProvider>
           <div className={styles.App}>
+            <h1>Solana credit cards</h1>
            
             <WalletMultiButton />
             <select onChange={handleChange} className={styles.dropdown}>
