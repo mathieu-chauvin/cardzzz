@@ -166,29 +166,28 @@ impl Processor {
         match instruction {
             LoanInstruction::InitLoan { amount } => {
                 msg!("Instruction: InitLoan");
-                Self::process_init_escrow(accounts, amount, program_id)
+                Self::process_init_loan(accounts, amount, program_id)
             },
-            LoanInstruction::CancelLoan { } => {
-                msg!("Instruction: InitLoan");
-                //Self::process_init_escrow(accounts, amount, program_id);
-                Ok(())
+            LoanInstruction::LendLoan { } => {
+                msg!("Instruction: LendLoan");
+                Self::process_lend(accounts, program_id)
             },
             LoanInstruction::RepayLoan { } => {
                 msg!("Instruction: RepayLoan");
-                //Self::process_init_escrow(accounts, amount, program_id)
-                Ok(())
+                Self::process_repay(accounts, program_id)
+                
             },
             LoanInstruction::ClaimLoan { } => {
                 msg!("Instruction: ClaimLoan");
-                //Self::process_init_escrow(accounts, amount, program_id)
-                Ok(())
+                Self::process_claim(accounts, program_id)
+            
             }
             
             
         }
     }
 
-    fn process_init_escrow(
+    fn process_init_loan(
         accounts: &[AccountInfo],
         amount: u64,
         program_id: &Pubkey,
@@ -207,25 +206,25 @@ impl Processor {
             return Err(ProgramError::IncorrectProgramId);
         }
 
-        let escrow_account = next_account_info(account_info_iter)?;
+        let loan_account = next_account_info(account_info_iter)?;
         let rent = &Rent::from_account_info(next_account_info(account_info_iter)?)?;
 
-        if !rent.is_exempt(escrow_account.lamports(), escrow_account.data_len()) {
+        if !rent.is_exempt(loan_account.lamports(), loan_account.data_len()) {
             return Err(EscrowError::NotRentExempt.into());
         }
 
-        let mut escrow_info = Loan::unpack_unchecked(&escrow_account.try_borrow_data()?)?;
-        if escrow_info.is_initialized() {
+        let mut loan_info = Loan::unpack_unchecked(&loan_account.try_borrow_data()?)?;
+        if loan_info.is_initialized() {
             return Err(ProgramError::AccountAlreadyInitialized);
         }
 
-        escrow_info.is_initialized = true;
-        escrow_info.initializer_pubkey = *initializer.key;
-        escrow_info.temp_token_account_pubkey = *temp_token_account.key;
-        escrow_info.expected_amount = amount;
+        loan_info.is_initialized = true;
+        loan_info.initializer_pubkey = *initializer.key;
+        loan_info.temp_token_account_pubkey = *temp_token_account.key;
+        loan_info.expected_amount = amount;
 
-        Loan::pack(escrow_info, &mut escrow_account.try_borrow_mut_data()?)?;
-        let (pda, _nonce) = Pubkey::find_program_address(&[b"escrow"], program_id);
+        Loan::pack(loan_info, &mut loan_account.try_borrow_mut_data()?)?;
+        let (pda, _nonce) = Pubkey::find_program_address(&[b"loan"], program_id);
 
         let token_program = next_account_info(account_info_iter)?;
         let owner_change_ix = spl_token::instruction::set_authority(
@@ -249,5 +248,105 @@ impl Processor {
 
         Ok(())
     }
+
+    fn process_lend(
+        accounts: &[AccountInfo],
+        program_id: &Pubkey,
+    ) -> ProgramResult {
+        let account_info_iter = &mut accounts.iter();
+        let initializer = next_account_info(account_info_iter)?;
+
+        if !initializer.is_signer {
+            return Err(ProgramError::MissingRequiredSignature);
+        }
+
+        let temp_token_account = next_account_info(account_info_iter)?;
+
+        let token_to_receive_account = next_account_info(account_info_iter)?;
+        if *token_to_receive_account.owner != spl_token::id() {
+            return Err(ProgramError::IncorrectProgramId);
+        }
+
+        let loan_account = next_account_info(account_info_iter)?;
+        let rent = &Rent::from_account_info(next_account_info(account_info_iter)?)?;
+
+        if !rent.is_exempt(loan_account.lamports(), loan_account.data_len()) {
+            return Err(EscrowError::NotRentExempt.into());
+        }
+
+
+        let (pda, _nonce) = Pubkey::find_program_address(&[b"loan"], program_id);
+
+        
+
+        Ok(())
+    }
+
+
+    fn process_claim(
+        accounts: &[AccountInfo],
+        program_id: &Pubkey,
+    ) -> ProgramResult {
+
+        let account_info_iter = &mut accounts.iter();
+        let initializer = next_account_info(account_info_iter)?;
+
+        if !initializer.is_signer {
+            return Err(ProgramError::MissingRequiredSignature);
+        }
+
+        let temp_token_account = next_account_info(account_info_iter)?;
+
+        let token_to_receive_account = next_account_info(account_info_iter)?;
+        if *token_to_receive_account.owner != spl_token::id() {
+            return Err(ProgramError::IncorrectProgramId);
+        }
+
+        let loan_account = next_account_info(account_info_iter)?;
+        let rent = &Rent::from_account_info(next_account_info(account_info_iter)?)?;
+
+        if !rent.is_exempt(loan_account.lamports(), loan_account.data_len()) {
+            return Err(EscrowError::NotRentExempt.into());
+        }
+
+        //check if the loan has been over limit date
+        
+        let (pda, _nonce) = Pubkey::find_program_address(&[b"loan"], program_id);
+
+
+        Ok(())
+    }
+
+    fn process_repay(
+        accounts: &[AccountInfo],
+        program_id: &Pubkey,
+    ) -> ProgramResult {
+
+        let account_info_iter = &mut accounts.iter();
+        let initializer = next_account_info(account_info_iter)?;
+
+        if !initializer.is_signer {
+            return Err(ProgramError::MissingRequiredSignature);
+        }
+
+        let temp_token_account = next_account_info(account_info_iter)?;
+
+        let token_to_receive_account = next_account_info(account_info_iter)?;
+        if *token_to_receive_account.owner != spl_token::id() {
+            return Err(ProgramError::IncorrectProgramId);
+        }
+
+        let loan_account = next_account_info(account_info_iter)?;
+        let rent = &Rent::from_account_info(next_account_info(account_info_iter)?)?;
+
+        if !rent.is_exempt(loan_account.lamports(), loan_account.data_len()) {
+            return Err(EscrowError::NotRentExempt.into());
+        }
+
+
+        let (pda, _nonce) = Pubkey::find_program_address(&[b"loan"], program_id);
+        Ok(())
+    }
+
 
 }

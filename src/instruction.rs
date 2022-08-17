@@ -18,7 +18,7 @@ pub enum LoanInstruction {
         /// The amount party A expects to receive of token Y
         amount: u64,
     },
-    CancelLoan {},
+    LendLoan {},
     RepayLoan {},
     ClaimLoan {}
 
@@ -33,7 +33,7 @@ impl LoanInstruction {
             0 => Self::InitLoan {
                 amount: Self::unpack_amount(rest)?,
             },
-            1 => Self::CancelLoan {
+            1 => Self::LendLoan {
             },
             2 => Self::RepayLoan {
             },
