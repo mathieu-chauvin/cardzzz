@@ -21,9 +21,7 @@ export const DataTableR= (props) => {
   const { connection } = useConnection();
   const { connected, publicKey, sendTransaction, signTransaction } = useWallet();
 
-  const [rows, setRows] = useState([
-    { id:'2', nft: '8ED7exrYJo3Bm8bpiUs67pEQHh8EbziMDZLFFqcMgsHT', lender: 'DMKnd938Y8gZseskBcNXW3c9SWvZXFkxHA8VhMKPpfZT', type_card:'BRONZE', amount: 0.575, interest: 3.5 },
-  ]);
+  const [rows, setRows] = useState([]);
 
 
 
@@ -111,7 +109,7 @@ export const DataTableR= (props) => {
           return alert(JSON.stringify(thisRow, null, 4));*/
         };
   
-        return <Button onClick={onClick}>Reimburse</Button>;
+        return <Button onClick={onClick}>Repay</Button>;
       }
     },
   ];
@@ -119,13 +117,15 @@ export const DataTableR= (props) => {
 
   return (
     <div style={{ height: 400, width: '100%' }}>
-      {rows.length ? <DataGrid
+      <p>Repay your loan to get your nft credit card back (with a better score than before).</p>
+      {rows.length ?
+      <DataGrid
         rows={rows}
         columns={columns}
         pageSize={5}
         rowsPerPageOptions={[5]}
         checkboxSelection
-      /> : <p>No loans to reimburse</p>}
+      />: <p>No loans to repay</p>}
     </div>
   );
 }

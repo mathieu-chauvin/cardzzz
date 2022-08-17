@@ -17,6 +17,7 @@ export const ShowNFTs = (props) => {
     const [nftList, setNftList] = useState([]);
     const creatorKey = 'KMcyC5nELGSwnhRwmNmoE3Nx1HkXyJENSC44vDG3frg';
 
+
     useEffect(() => {
       async function getTokens() {
         //let myNfts = await metaplex.nfts().findAllByOwner(metaplex.identity().publicKey);
@@ -62,8 +63,8 @@ export const ShowNFTs = (props) => {
 
       console.log(nftList[0]);
       for (let i = 0; i < maxValue; i++) {             
-          let score = Math.floor(Math.random()*700-500);
-          if(score < 0){score = 0;}
+          let score = 0;
+          //scoreV = (score+50);
           if (nftList[i].name == 'SolCredit cards'){
             items.push(<MenuItem value={nftList[i]}>{nftList[i].name}, Bronze (Score : {score})</MenuItem>);
           }
@@ -116,7 +117,7 @@ export const ShowNFTs = (props) => {
                   alt="The downloaded illustration of the provided NFT address."
                   style={{ maxWidth: '70%' }}
                 />
-                <p>Interest rate : 3.5% per month</p>
+                <p>Max borrowing limit : 0.5 sol      <br/>         Interest rate : 3.5% per month</p>
               </div>
             )}
           </div>

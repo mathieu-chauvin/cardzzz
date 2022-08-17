@@ -107,7 +107,7 @@ export const DataTable= (props) => {
           return alert(JSON.stringify(thisRow, null, 4));*/
         };
   
-        return <Button onClick={onClick}>Lend</Button>;
+        return <Button disabled={true} onClick={onClick}>Claim NFT</Button>;
       }
     },
   ];
@@ -115,6 +115,7 @@ export const DataTable= (props) => {
 
   return (
     <div style={{ height: 400, width: '100%' }}>
+      <p> If the borrower has not repaid their loan within 1 month, you can claim their nft credit card as collateral.</p> 
       <DataGrid
         rows={props.rows}
         columns={columns}

@@ -34,7 +34,7 @@ impl IsInitialized for Escrow {
 }
 
 impl Pack for Escrow {
-    const LEN: usize = 105;
+    const LEN: usize = 73;
     fn unpack_from_slice(src: &[u8]) -> Result<Self, ProgramError> {
         let src = array_ref![src, 0, Escrow::LEN];
         let (
@@ -63,9 +63,8 @@ impl Pack for Escrow {
             is_initialized_dst,
             initializer_pubkey_dst,
             temp_token_account_pubkey_dst,
-            initializer_token_to_receive_account_pubkey_dst,
             expected_amount_dst,
-        ) = mut_array_refs![dst, 1, 32, 32, 32, 8];
+        ) = mut_array_refs![dst, 1, 32, 32, 8];
 
         let Escrow {
             is_initialized,
