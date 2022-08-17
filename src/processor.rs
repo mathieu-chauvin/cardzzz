@@ -167,7 +167,23 @@ impl Processor {
             LoanInstruction::InitLoan { amount } => {
                 msg!("Instruction: InitLoan");
                 Self::process_init_escrow(accounts, amount, program_id)
+            },
+            LoanInstruction::CancelLoan { } => {
+                msg!("Instruction: InitLoan");
+                //Self::process_init_escrow(accounts, amount, program_id);
+                Ok(())
+            },
+            LoanInstruction::RepayLoan { } => {
+                msg!("Instruction: RepayLoan");
+                //Self::process_init_escrow(accounts, amount, program_id)
+                Ok(())
+            },
+            LoanInstruction::ClaimLoan { } => {
+                msg!("Instruction: ClaimLoan");
+                //Self::process_init_escrow(accounts, amount, program_id)
+                Ok(())
             }
+            
             
         }
     }
