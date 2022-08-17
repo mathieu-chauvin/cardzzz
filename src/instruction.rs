@@ -3,7 +3,7 @@ use std::convert::TryInto;
 
 use crate::error::EscrowError::InvalidInstruction;
 
-pub enum EscrowInstruction {
+pub enum LoanInstruction {
     /// Starts the trade by creating and populating an escrow account and transferring ownership of the given temp token account to the PDA
     ///
     ///
@@ -14,19 +14,19 @@ pub enum EscrowInstruction {
     /// 2. `[writable]` The escrow account, it will hold all necessary info about the trade.
     /// 3. `[]` The rent sysvar
     /// 4. `[]` The token program
-    InitEscrow {
+    InitLoan {
         /// The amount party A expects to receive of token Y
         amount: u64,
     },
 }
 
-impl EscrowInstruction {
-    /// Unpacks a byte buffer into a [EscrowInstruction](enum.EscrowInstruction.html).
+impl LoanInstruction {
+    /// Unpacks a byte buffer into a [LoanInstruction](enum.LoanInstruction.html).
     pub fn unpack(input: &[u8]) -> Result<Self, ProgramError> {
         let (tag, rest) = input.split_first().ok_or(InvalidInstruction)?;
 
         Ok(match tag {
-            0 => Self::InitEscrow {
+            0 => Self::InitLoan {
                 amount: Self::unpack_amount(rest)?,
             },
             /*1 => Self::Exchange {

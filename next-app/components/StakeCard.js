@@ -237,7 +237,7 @@ export const StakeCard = (props) => {
           
           {!staked?
             <div className={styles.container}>
-              <h1 className={styles.title}>Enter the amount you'd like to borrow (max duration : 1 month)</h1>
+              <h1 className={styles.title}>Enter the amount you&apos;d like to borrow, max duration : 1 month</h1>
               <div className={styles.nftForm}>
                 
                 <h3 className={styles.title}>Amount (in SOL)</h3>
@@ -259,8 +259,9 @@ export const StakeCard = (props) => {
             <h1>This card is staked and waiting for a lender.</h1>
             
           </div>
+}
 
-      }}
+      
 
         </div>
       </div>
