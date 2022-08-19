@@ -2,8 +2,16 @@
   "dependencies": {
     "@solana/spl-token": "^0.3.0",
     "@solana/web3.js": "^1.50.1",
+    "create-react-app": "^5.0.1"
+  },
+  "devDependencies": {
+    "@types/chai": "^4.3.3",
+    "@types/mocha": "^9.1.1",
     "chai": "^4.3.6",
-    "create-react-app": "^5.0.1",
-    "mocha": "^10.0.0"
+    "mocha": "^10.0.0",
+    "ts-node": "^10.9.1"
+  },
+  "scripts": {
+    "test": "mocha --timeout 10000 --require ts-node/register tests/*.ts"
   }
 }
