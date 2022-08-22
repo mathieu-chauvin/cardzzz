@@ -1,6 +1,6 @@
 import * as web3 from '@solana/web3.js';
 import * as spl from '@solana/spl-token';
-import { createMint, getOrCreateAssociatedTokenAccount, mintTo, transfer } from '@solana/spl-token';
+import { createMint, getOrCreateAssociatedTokenAccount, mintTo, transfer, AccountLayout } from '@solana/spl-token';
 
 import {expect} from 'chai';
 //import exp from 'constants';
@@ -36,6 +36,9 @@ describe("escrow", ()=>{
     );
 
     const alice = web3.Keypair.generate();
+
+    console.log('alice : ',alice.publicKey.toBase58());
+
     const bob = web3.Keypair.generate();
 
     const programId = new web3.PublicKey('7yo7fcTxAyAtF3PsoRmeXWeoNtUD5m9qykZ5jhWqtPbR');
@@ -66,7 +69,6 @@ describe("escrow", ()=>{
 
 
 
-    // alice put sol in chest
     it("initialize account a", async () => {
 
          // airdrop 5 sol to alice
@@ -89,7 +91,7 @@ describe("escrow", ()=>{
 
         //const chest_mint_pda = web3.PublicKey.findProgramAddressSync([Buffer.from("chest"), mint.toBuffer()],programKey);
 
-        console.log('mint');
+        console.log('mint', mint.toBase58());
         // Get the token account of the fromWallet address, and if it does not exist, create it
         const fromTokenAccount = await getOrCreateAssociatedTokenAccount(
             connection,
@@ -113,16 +115,6 @@ describe("escrow", ()=>{
             1
         );
         console.log('mint tx:', signature);
-
-            // Transfer the new token to the "toTokenAccount" we just created
-        signature = await transfer(
-            connection,
-            fromWallet,
-            fromTokenAccount.address,
-            toTokenAccount.address,
-            fromWallet.publicKey,
-            1
-        );
 
          
         const tempXTokenAccountKeypair = new web3.Keypair();
@@ -160,6 +152,8 @@ describe("escrow", ()=>{
           publicKey
         );
 
+        console.log('associatedSourceTokenAddr', associatedSourceTokenAddr.toBase58());
+
 
         const transferXTokensToTempAccIx = spl.createTransferInstruction(
             
@@ -167,21 +161,21 @@ describe("escrow", ()=>{
             tempXTokenAccountKeypair.publicKey,
             publicKey,
             1,
-            [],
-            spl.TOKEN_PROGRAM_ID,
         );
 
         const amount = 0.5;
         const escrowKeypair = new web3.Keypair();
         const createEscrowAccountIx = web3.SystemProgram.createAccount({
-          space: 200,
+          space: 73,
           lamports: await connection.getMinimumBalanceForRentExemption(
-            200
+            73
           ),
           fromPubkey: publicKey,
           newAccountPubkey: escrowKeypair.publicKey,
           programId: programId,
         });
+
+        console.log('createEscrowAccountIx', escrowKeypair.publicKey.toBase58());
 
         console.log('amount', amount*web3.LAMPORTS_PER_SOL);
 
@@ -203,12 +197,13 @@ describe("escrow", ()=>{
             { pubkey: spl.TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
           ],
           data: Buffer.from(
-            //Uint8Array.of(0)
+           //Uint8Array.of(0)
             Uint8Array.of(0, ...amountBN)
           ),
         });
 
         console.log(initEscrowIx.data)
+        console.log('hello')
 
 
         const tx = new web3.Transaction().add(
@@ -224,7 +219,28 @@ describe("escrow", ()=>{
         tx.recentBlockhash= (await connection.getLatestBlockhash('finalized')).blockhash; 
         tx.feePayer = publicKey;
 
-        await web3.sendAndConfirmTransaction(connection, tx, [alice, escrowKeypair, tempXTokenAccountKeypair]);
+        await web3.sendAndConfirmTransaction(connection, tx, [alice, escrowKeypair,tempXTokenAccountKeypair]);
+
+        console.log("Token                                         Balance");
+        console.log("------------------------------------------------------------");
+        const tokenAccount = await connection.getAccountInfo(tempXTokenAccountKeypair.publicKey);
+
+        expect(tokenAccount).is.not.null;
+        
+        if (tokenAccount) {
+            const accountData = AccountLayout.decode(tokenAccount.data);
+            console.log(`${new web3.PublicKey(accountData.mint)}   ${accountData.amount}`);
+
+            console.log("------------------------------------------------------------");
+            console.log(accountData.amount);
+            expect(accountData.amount).to.equal(BigInt(1));
+
+        }
+        
+        //connection.getTokenAccountsByOwner
+        
+
+        //escrowKeypair,
 
 
         
