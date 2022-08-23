@@ -6,12 +6,13 @@ import * as web3 from "@solana/web3.js";
 import * as spl from "@solana/spl-token";
 import { TokenAccountNotFoundError } from '@solana/spl-token';
 
-const BN = require('bn.js');
-
 export const StakeCard = (props) => {
     const { metaplex } = useMetaplex();
     const { connection } = useConnection();
     const { connected, publicKey, sendTransaction, signTransaction } = useWallet();
+
+    const BN = require('bn.js');
+
 
     const nft = props.nft;
     const [amount, setAmount] = useState(0);
@@ -45,15 +46,6 @@ export const StakeCard = (props) => {
     }
 
     const stakeNFT = async () => {
-        /*let myNfts = await metaplex.nfts().findAllByOwner(metaplex.identity().publicKey);
-        if(!myNfts.length) {
-            setNft(null);
-            return;
-        }
-        wallet.sendTransaction(web3.Instruction.createAccount(myNfts[0].mint, myNfts[0].mint, 100));*/
-
-
-        //create an associated account for the NFT owned by the program
 
         const tempXTokenAccountKeypair = new web3.Keypair();
 
@@ -93,7 +85,6 @@ export const StakeCard = (props) => {
           publicKey
         );
 
-        console.log('associated'+ associatedSourceTokenAddr);
 
         const transferXTokensToTempAccIx = spl.createTransferInstruction(
             
@@ -107,18 +98,22 @@ export const StakeCard = (props) => {
 
         const escrowKeypair = new web3.Keypair();
         const createEscrowAccountIx = web3.SystemProgram.createAccount({
-          space: 200,
+          space: 73,
           lamports: await connection.getMinimumBalanceForRentExemption(
-            200
+            73
           ),
           fromPubkey: publicKey,
           newAccountPubkey: escrowKeypair.publicKey,
           programId: programId,
         });
 
-        console.log('amount', amount);
+        console.log('amount', amount*web3.LAMPORTS_PER_SOL);
+
+        const amountBN = new BN(amount*web3.LAMPORTS_PER_SOL).toArray("le", 8);
+
+        console.log(amountBN);
         
-        /*const initEscrowIx = new web3.TransactionInstruction({
+        const initEscrowIx = new web3.TransactionInstruction({
           programId: programId,
           keys: [
             { pubkey: publicKey, isSigner: true, isWritable: false },
@@ -132,21 +127,23 @@ export const StakeCard = (props) => {
             { pubkey: spl.TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
           ],
           data: Buffer.from(
-            Uint8Array.of(0, ...new BN(amount).toArray("le", 8))
+           //Uint8Array.of(0)
+            Uint8Array.of(0, ...amountBN)
           ),
-        });*/
+        });
+        console.log(initEscrowIx.data)
 
 
         const tx = new web3.Transaction().add(
           createTempTokenAccountIx,
           initTempAccountIx,
           transferXTokensToTempAccIx,
-          //createEscrowAccountIx,
-          //initEscrowIx
+          createEscrowAccountIx,
+          initEscrowIx
           
         );
         
-        console.log(connection);
+        console.log(tx);
         tx.recentBlockhash= (await connection.getLatestBlockhash('finalized')).blockhash; 
         tx.feePayer = publicKey;
 
@@ -158,14 +155,13 @@ export const StakeCard = (props) => {
         console.log("Sending Alice's transaction...");
 
         let signature = '';
-        let signature2 = '';
         try {
-          const transaction = tx;
 
             const signed = await signTransaction(tx);
             console.log('signed');
 
             signed.partialSign(tempXTokenAccountKeypair);
+            signed.partialSign(escrowKeypair);
 
             signature = await sendTransaction(signed, connection);
             // now sign with the tokenAccount
@@ -187,44 +183,10 @@ export const StakeCard = (props) => {
         transaction2.feePayer = publicKey;*/
 
 
-       /*try {
-
-          
-
-          const signed2 = await signTransaction(transaction2);
-          console.log('signed2');
-          // now sign with the escrow account
-          signed2.partialSign(escrowKeypair);
-
-          signature2 = await sendTransaction(transaction2, connection);
-          
-
-          console.log('info', 'Transaction sent:', signature2);
-
-          await connection.confirmTransaction(signature2, 'processed');
-          console.log('success', 'Transaction successful!', signature2);
-      } catch (error) {
-          console.log('error', `Transaction failed! ${error?.message}`, signature2);
-          return;
-      }*/
-
+       
         console.log("finished stake NFT");
         setStaked(true);
-          
-        //await wallet.signTransaction(tx);
-
-        /*await wallet.sendTransaction(
-          tx,
-          connection.connection
-        );*/
-        //[wallet.publicKey, tempXTokenAccountKeypair.publicKey]
-
-        //spl.transfer(connection, wallet.publicKey,wallet.publicKey, pda, wallet.publicKey, 1)
-        //web3.SystemProgram.transfer({fromPubkey:alice.publicKey, toPubkey:chest_a_b[0], lamports:web3.LAMPORTS_PER_SOL})
-    
-      
-        //const instr = web3.Instruction.createAccount(myNfts[0].mint, myNfts[0].mint, 100);
-
+         
 
 
     };

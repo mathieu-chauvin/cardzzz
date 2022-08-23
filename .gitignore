@@ -4,3 +4,4 @@ package-lock.json
 target
 tests/*.js
 assets
+test-ledger

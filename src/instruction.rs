@@ -2,6 +2,7 @@ use solana_program::program_error::ProgramError;
 use std::convert::TryInto;
 
 use crate::error::EscrowError::InvalidInstruction;
+use solana_program::msg;
 
 pub enum LoanInstruction {
     /// Starts the trade by creating and populating an escrow account and transferring ownership of the given temp token account to the PDA
@@ -29,6 +30,8 @@ impl LoanInstruction {
     pub fn unpack(input: &[u8]) -> Result<Self, ProgramError> {
         let (tag, rest) = input.split_first().ok_or(InvalidInstruction)?;
 
+        msg!("tag: {:?}", tag);
+
         Ok(match tag {
             0 => Self::InitLoan {
                 amount: Self::unpack_amount(rest)?,
@@ -44,6 +47,7 @@ impl LoanInstruction {
     }
 
     fn unpack_amount(input: &[u8]) -> Result<u64, ProgramError> {
+        msg!("input: {:?}", input);
         let amount = input
             .get(..8)
             .and_then(|slice| slice.try_into().ok())
