@@ -22,9 +22,6 @@ export const DataTable2= (props) => {
   const { connected, publicKey, sendTransaction, signTransaction } = useWallet();
 
 
-  const [rows, setRows] = useState([
-   
-  ]);
 
 
   const columns = [
@@ -123,7 +120,7 @@ export const DataTable2= (props) => {
   return (
     <div style={{ height: 400, width: '100%' }}>
       <DataGrid
-        rows={rows}
+        rows={props.rows}
         columns={columns}
         pageSize={5}
         rowsPerPageOptions={[5]}
