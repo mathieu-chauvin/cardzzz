@@ -98,9 +98,9 @@ export const StakeCard = (props) => {
 
         const escrowKeypair = new web3.Keypair();
         const createEscrowAccountIx = web3.SystemProgram.createAccount({
-          space: 200,
+          space: 73,
           lamports: await connection.getMinimumBalanceForRentExemption(
-            200
+            73
           ),
           fromPubkey: publicKey,
           newAccountPubkey: escrowKeypair.publicKey,
@@ -127,10 +127,10 @@ export const StakeCard = (props) => {
             { pubkey: spl.TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
           ],
           data: Buffer.from(
-            Uint8Array.of(0)//Uint8Array.of(0, ...amountBN)
+           //Uint8Array.of(0)
+            Uint8Array.of(0, ...amountBN)
           ),
         });
-
         console.log(initEscrowIx.data)
 
 
