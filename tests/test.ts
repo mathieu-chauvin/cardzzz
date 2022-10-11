@@ -41,7 +41,7 @@ describe("escrow", ()=>{
 
     const bob = web3.Keypair.generate();
 
-    const programId = new web3.PublicKey('7yo7fcTxAyAtF3PsoRmeXWeoNtUD5m9qykZ5jhWqtPbR');
+    const programId = new web3.PublicKey('7QjC4bZTmXvwrHfJsVG1mjgAMx9QLGSGij9cSJ35LYUi');
 
 
     /*const carol = web3.Keypair.generate();
@@ -65,15 +65,14 @@ describe("escrow", ()=>{
     const fromWallet = alice;
     const toWallet = bob;
 
-    let mint;
+    let mint: web3.PublicKey;
+ 
+    const tempXTokenAccountKeypair = new web3.Keypair();
+    const publicKey = alice.publicKey;
+    const escrowKeypair = new web3.Keypair();
 
-
-
-    it("initialize account a", async () => {
-
-         // airdrop 5 sol to alice
-
-         let airdropSignature = await connection.requestAirdrop(alice.publicKey, 1 * web3.LAMPORTS_PER_SOL);
+    before(async () => {
+        let airdropSignature = await connection.requestAirdrop(alice.publicKey, 1 * web3.LAMPORTS_PER_SOL);
          const latestBlockhash = await connection.getLatestBlockhash('confirmed');
      
          await connection.confirmTransaction({
@@ -85,7 +84,15 @@ describe("escrow", ()=>{
          console.log('before mint');
 
 
-         const mint = await createMint(connection, alice, alice.publicKey, null, 0);
+        mint = await createMint(connection, alice, alice.publicKey, null, 0);
+    }); 
+
+
+    it("initialize account a", async () => {
+
+         // airdrop 5 sol to alice
+
+         
         //const pda_nft_account = await getOrCreateAssociatedTokenAccount(connection, alice.publicKey, chest_a_b[0]);
 
 
@@ -115,10 +122,6 @@ describe("escrow", ()=>{
             1
         );
         console.log('mint tx:', signature);
-
-         
-        const tempXTokenAccountKeypair = new web3.Keypair();
-        const publicKey = alice.publicKey;
 
         const borrower_token_account_pubkey = fromTokenAccount.address;
 
@@ -164,7 +167,6 @@ describe("escrow", ()=>{
         );
 
         const amount = 0.5;
-        const escrowKeypair = new web3.Keypair();
         const createEscrowAccountIx = web3.SystemProgram.createAccount({
           space: 73,
           lamports: await connection.getMinimumBalanceForRentExemption(
@@ -234,8 +236,13 @@ describe("escrow", ()=>{
             console.log("------------------------------------------------------------");
             console.log(accountData.amount);
             expect(accountData.amount).to.equal(BigInt(1));
-
+            console.log("------------------------------------------------------------");
+            console.log(accountData.owner.toBase58());
+            const find_program_address = await web3.PublicKey.findProgramAddressSync([Buffer.from("loan")],programId);
+            expect(accountData.owner.toBase58()).to.equal(find_program_address[0].toBase58());
         }
+
+
         
         //connection.getTokenAccountsByOwner
         
@@ -247,42 +254,53 @@ describe("escrow", ()=>{
 
     });
 
-    it("bob put sol in chest", async () => {
+    it("alice repays her loan", async () => {
 
-        const amount = 10000000;
-        const interest = 100;
-        const duration = 10;
 
-        /*const pkey = web3.PublicKey.createWithSeed(alice.publicKey, "offer",programKey;)
-        const transactionCreateAccount().add(
-            web3.SystemProgram.createAccountWithSeed({
-                fromPubkey:alice.publicKey,
 
-            })
-        )
+        const paybackIx = new web3.TransactionInstruction({
+          programId: programId,
+          keys: [
+            { pubkey: publicKey, isSigner: true, isWritable: false },
+            {
+              pubkey: tempXTokenAccountKeypair.publicKey,
+              isSigner: false,
+              isWritable: true,
+            },
+            { pubkey: escrowKeypair.publicKey, isSigner: false, isWritable: true },
+            { pubkey: web3.SYSVAR_RENT_PUBKEY, isSigner: false, isWritable: false },
+            { pubkey: spl.TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
+          ],
+          data: Buffer.from(
+           //Uint8Array.of(0)
+            Uint8Array.of(2)
+          ),
+       });
 
-        const instruction_data = Uint8Array.from([amount,interest,duration]);
-
-        const transaction = new web3.Transaction().add(
-            new web3.TransactionInstruction({
-                programId:programKey,
-                keys:[
-                    {pubkey:bob.publicKey, isSigner:true, isWritable:false},
-                    {pubkey:alice.publicKey, isSigner:false, isWritable:true},
-                    {pubkey:web3.SystemProgram.programId, isSigner:false, isWritable:false},
-                    {pubkey:mint, isSigner:false, isWritable:true},
-                ],
-                data:Buffer.from(instruction_data),
-            }),
+        const tx = new web3.Transaction().add(
+          paybackIx
         );
-        await web3.sendAndConfirmTransaction(connection,transaction,[bob]);*/
+
+        tx.recentBlockhash= (await connection.getLatestBlockhash('finalized')).blockhash;
+        tx.feePayer = publicKey;
+        web3.sendAndConfirmTransaction(connection, tx, [alice]);
 
 
-
-       
-       
-       
-
+        console.log("Token                                         Balance");
+        console.log("------------------------------------------------------------");
+        const tokenAccount = await connection.getAccountInfo(tempXTokenAccountKeypair.publicKey);
+        
+        const associatedSourceTokenAddr = await spl.getAssociatedTokenAddress(
+          mint,
+          publicKey
+        );
+        
+        expect(tokenAccount).is.not.null;
+        
+        if (tokenAccount) {
+            const accountData = AccountLayout.decode(tokenAccount.data);
+            expect(accountData.owner.toBase58()).to.equal(alice.publicKey.toBase58());
+        }
         //const programBalance = await connection.getBalance();
 
     });
