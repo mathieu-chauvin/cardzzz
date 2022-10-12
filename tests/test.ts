@@ -41,7 +41,7 @@ describe("escrow", ()=>{
 
     const bob = web3.Keypair.generate();
 
-    const programId = new web3.PublicKey('7QjC4bZTmXvwrHfJsVG1mjgAMx9QLGSGij9cSJ35LYUi');
+    const programId = new web3.PublicKey('614qC7VcrRvmJpzgpspboy68oCevDzoyGV853LUzPEhY');
 
 
     /*const carol = web3.Keypair.generate();
@@ -66,6 +66,7 @@ describe("escrow", ()=>{
     const toWallet = bob;
 
     let mint: web3.PublicKey;
+    let associatedSourceTokenAddr: web3.PublicKey;
  
     const tempXTokenAccountKeypair = new web3.Keypair();
     const publicKey = alice.publicKey;
@@ -84,7 +85,11 @@ describe("escrow", ()=>{
          console.log('before mint');
 
 
-        mint = await createMint(connection, alice, alice.publicKey, null, 0);
+        mint = await createMint(connection, alice, alice.publicKey, null, 0);    
+        associatedSourceTokenAddr = await spl.getAssociatedTokenAddress(
+          mint,
+          publicKey
+        );
     }); 
 
 
@@ -150,10 +155,7 @@ describe("escrow", ()=>{
         );
 
 
-        const associatedSourceTokenAddr = await spl.getAssociatedTokenAddress(
-          mint,
-          publicKey
-        );
+       
 
         console.log('associatedSourceTokenAddr', associatedSourceTokenAddr.toBase58());
 
@@ -256,6 +258,9 @@ describe("escrow", ()=>{
 
     it("alice repays her loan", async () => {
 
+        const pda_account = await web3.PublicKey.findProgramAddress([Buffer.from("loan")], programId);
+        console.log('pda_account', pda_account[0].toBase58());
+        console.log('source', associatedSourceTokenAddr.toBase58());
 
 
         const paybackIx = new web3.TransactionInstruction({
@@ -267,9 +272,11 @@ describe("escrow", ()=>{
               isSigner: false,
               isWritable: true,
             },
+            { pubkey: associatedSourceTokenAddr, isSigner: false, isWritable: true },
             { pubkey: escrowKeypair.publicKey, isSigner: false, isWritable: true },
             { pubkey: web3.SYSVAR_RENT_PUBKEY, isSigner: false, isWritable: false },
             { pubkey: spl.TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
+            { pubkey: pda_account[0], isSigner: false, isWritable: false },
           ],
           data: Buffer.from(
            //Uint8Array.of(0)
@@ -283,24 +290,23 @@ describe("escrow", ()=>{
 
         tx.recentBlockhash= (await connection.getLatestBlockhash('finalized')).blockhash;
         tx.feePayer = publicKey;
-        web3.sendAndConfirmTransaction(connection, tx, [alice]);
+        await web3.sendAndConfirmTransaction(connection, tx, [alice]);
 
 
         console.log("Token                                         Balance");
         console.log("------------------------------------------------------------");
-        const tokenAccount = await connection.getAccountInfo(tempXTokenAccountKeypair.publicKey);
-        
-        const associatedSourceTokenAddr = await spl.getAssociatedTokenAddress(
-          mint,
-          publicKey
-        );
-        
+        const tokenAccount = await connection.getAccountInfo(associatedSourceTokenAddr);
         expect(tokenAccount).is.not.null;
-        
         if (tokenAccount) {
             const accountData = AccountLayout.decode(tokenAccount.data);
-            expect(accountData.owner.toBase58()).to.equal(alice.publicKey.toBase58());
+            console.log(`${new web3.PublicKey(accountData.mint)}   ${accountData.amount}`);
+            console.log("------------------------------------------------------------");
+            expect(accountData.amount).to.equal(BigInt(1));
+            console.log("------------------------------------------------------------");
         }
+        
+        
+        
         //const programBalance = await connection.getBalance();
 
     });
