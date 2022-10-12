@@ -41,7 +41,7 @@ describe("escrow", ()=>{
 
     const bob = web3.Keypair.generate();
 
-    const programId = new web3.PublicKey('614qC7VcrRvmJpzgpspboy68oCevDzoyGV853LUzPEhY');
+    const programId = new web3.PublicKey('DAM6HHcnPbjhhSA3KJynvosGiDwu6u2e32WFdDSimq4N');
 
 
     /*const carol = web3.Keypair.generate();

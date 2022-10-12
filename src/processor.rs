@@ -183,23 +183,29 @@ impl Processor {
         let rent = &Rent::from_account_info(next_account_info(account_info_iter)?)?;
         let token_program = next_account_info(account_info_iter)?;
         let pda_account = next_account_info(account_info_iter)?;
-        
+
+        let loan_info = Loan::unpack(&loan_account.try_borrow_data()?)?;
+
         if !initializer.is_signer {
             return Err(ProgramError::MissingRequiredSignature);
         }
 
-        /*if initializer.key != &loan_account.owner {
-            return Err(ProgramError::);
-        }*/
+        if !rent.is_exempt(loan_account.lamports(), loan_account.data_len()) {
+            return Err(EscrowError::NotRentExempt.into());
+        }
 
 
+        if initializer.key != &loan_info.initializer_pubkey {
+            return Err(EscrowError::InvalidInitializer.into());
+        }
+
+        if loan_info.temp_token_account_pubkey != *temp_token_account.key {
+            return Err(EscrowError::InvalidTempTokenAccount.into());
+        }
         /*if *token_to_receive_account.owner != spl_token::id() {
             return Err(ProgramError::IncorrectProgramId);
         }*/
 
-        if !rent.is_exempt(loan_account.lamports(), loan_account.data_len()) {
-            return Err(EscrowError::NotRentExempt.into());
-        }
 
         let (pda, nonce) = Pubkey::find_program_address(&[b"loan"], program_id);
 
