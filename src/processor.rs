@@ -252,6 +252,14 @@ impl Processor {
             &[&[&b"loan"[..], &[nonce]]],
         )?;
 
+        msg!("Closing the escrow account...");
+        **initializer.try_borrow_mut_lamports()? = initializer
+            .lamports()
+            .checked_add(loan_account.lamports())
+            .ok_or(EscrowError::AmountOverflow)?;
+        **loan_account.try_borrow_mut_lamports()? = 0;
+        *loan_account.try_borrow_mut_data()? = &mut [];
+
 
         
         Ok(())
