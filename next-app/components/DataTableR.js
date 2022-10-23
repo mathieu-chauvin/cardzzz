@@ -9,6 +9,9 @@ import { useWallet, useConnection } from '@solana/wallet-adapter-react';
 import { SystemProgram } from '@solana/web3.js';
 
 import * as web3 from '@solana/web3.js';
+import * as spl from '@solana/spl-token';
+
+import { getAssociatedTokenAddress, getAccount } from '@solana/spl-token';
 
 
 
@@ -21,12 +24,12 @@ export const DataTableR= (props) => {
   const { connection } = useConnection();
   const { connected, publicKey, sendTransaction, signTransaction } = useWallet();
 
-  const [rows, setRows] = useState([]);
-
-
+  
+  const programId = new web3.PublicKey('9p1cABSykMyvAhUFCLoUvf4gAE89cgFUtah4m8QRr5Qq');
 
   const columns = [
     { field: 'nft', headerName: 'NFT', width: 500 },
+    { field: 'address', headerName: 'Address', width: 200 },
     { field: 'lender', headerName: 'Lender', width: 500 },
     {
       field: 'type_card',
@@ -68,7 +71,7 @@ export const DataTableR= (props) => {
             console.log(thisRow.lender);
             console.log(thisRow.amount);
 
-          const tx = new web3.Transaction().add(web3.SystemProgram.transfer({fromPubkey: publicKey, toPubkey: thisRow.lender, lamports: thisRow.amount*web3.LAMPORTS_PER_SOL}));
+          const tx = getRepayTx(thisRow);
           let signature = '';
           
           try {
@@ -98,15 +101,6 @@ export const DataTableR= (props) => {
           
   
           
-  /*
-          api
-            .getAllColumns()
-            .filter((c) => c.field !== "__check__" && !!c)
-            .forEach(
-              (c) => (thisRow[c.field] = params.getValue(params.id, c.field))
-            );
-  
-          return alert(JSON.stringify(thisRow, null, 4));*/
         };
   
         return <Button onClick={onClick}>Repay</Button>;
@@ -114,13 +108,56 @@ export const DataTableR= (props) => {
     },
   ];
 
+  async function getRepayTx (row){
+      console.log("repay");
+      const escrowPubkey = new web3.PublicKey(row.address);
+      const tempXTokenAccount =  await getAccount(connection,new web3.PublicKey(row.nft));
+      const mint = tempXTokenAccount.mint;
+      const associatedSourceTokenAddr = await getAssociatedTokenAddress(mint,publicKey);
+      
+      const pda_account = await web3.PublicKey.findProgramAddress([Buffer.from("loan")], programId);
+        console.log('pda_account', pda_account[0].toBase58());
+        console.log('source', associatedSourceTokenAddr.toBase58());
+
+
+        const paybackIx = new web3.TransactionInstruction({
+          programId: programId,
+          keys: [
+            { pubkey: publicKey, isSigner: true, isWritable: false },
+            {
+              pubkey: tempXTokenAccount.address,
+              isSigner: false,
+              isWritable: true,
+            },
+            { pubkey: associatedSourceTokenAddr, isSigner: false, isWritable: true },
+            { pubkey: escrowPubkey, isSigner: false, isWritable: true },
+            { pubkey: web3.SYSVAR_RENT_PUBKEY, isSigner: false, isWritable: false },
+            { pubkey: spl.TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
+            { pubkey: pda_account[0], isSigner: false, isWritable: false },
+          ],
+          data: Buffer.from(
+            Uint8Array.of(2)
+          ),
+       });
+
+        const tx = new web3.Transaction().add(
+          paybackIx
+        );
+
+        tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
+        tx.feePayer = publicKey;
+        return tx;
+
+    }
+    
+    
 
   return (
     <div style={{ height: 400, width: '100%' }}>
       <p>Repay your loan to get your nft credit card back (with a better score than before).</p>
-      {rows.length ?
+      {props.rows.length ?
       <DataGrid
-        rows={rows}
+        rows={props.rows}
         columns={columns}
         pageSize={5}
         rowsPerPageOptions={[5]}

@@ -42,21 +42,6 @@ describe("escrow", ()=>{
     const bob = web3.Keypair.generate();
 
     const programId = new web3.PublicKey('DAM6HHcnPbjhhSA3KJynvosGiDwu6u2e32WFdDSimq4N');
-
-
-    /*const carol = web3.Keypair.generate();
-    const dave = web3.Keypair.generate();
-    const eve = web3.Keypair.generate();
-    const frank = web3.Keypair.generate();
-    const george = web3.Keypair.generate();
-    const hank = web3.Keypair.generate();
-    const ian = web3.Keypair.generate();
-    const james = web3.Keypair.generate();
-    const kate = web3.Keypair.generate();
-    const larry = web3.Keypair.generate();
-    const mike = web3.Keypair.generate();*/
-        //const chest = web3.Keypair.generate();
-        
     
     console.log('controllerKeypair');
     console.log(controllerKeypair.publicKey.toBase58());
