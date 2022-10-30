@@ -15,7 +15,7 @@ export const ListOffers = (props) => {
     const { connection } = useConnection();
 
     const [rowsAL, setRowsAL] = useState([]);
-    const programId = new web3.PublicKey('7yo7fcTxAyAtF3PsoRmeXWeoNtUD5m9qykZ5jhWqtPbR');
+    const programId = new web3.PublicKey('9p1cABSykMyvAhUFCLoUvf4gAE89cgFUtah4m8QRr5Qq');
 
     const [rows, setRows] = useState([]);
 
@@ -71,22 +71,13 @@ export const ListOffers = (props) => {
 
 
 
-
-    const rows2 = [
-      { id:'1', nft: 'GyZvmjUdFQSRjixEvySFpViiLjzXuGX9T282BUfFzU7N', owner: 'KGE7DqaQXDN7hfhMshCgisNXzKD2GEZffc3YENNRdjQd', type_card:'SILVER', amount: 3, interest: 2 },
-      { id:'2', nft: '8ED7exrYJo3Bm8bpiUs67pEQHh8EbziMDZLFFqcMgsHT', owner: 'KMcyC5nELGSwnhRwmNmoE3Nx1HkXyJENSC44vDG3frg', type_card:'BRONZE', amount: 0.5, interest: 3.5 },
-      
-    ];
-
-
-
     return wallet.connected && (
       <div>
         
             <h3>Active loans</h3>
             {rowsAL.length? <DataTable rows={rowsAL}/>: <p>No active loans</p>}
               <h3>New possible loans</h3>
-              {rows2.length? <DataTable2 rows={rows} onChangeAL={(rowsA) => setRowsAL(rowsA)} />: null }
+              {rows.length? <DataTable2 rows={rows} onChangeAL={(rowsA) => setRowsAL(rowsA)} />: null }
             
       </div>
     );
