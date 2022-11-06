@@ -56,9 +56,10 @@ describe("escrow", ()=>{
     const tempXTokenAccountKeypair = new web3.Keypair();
     const publicKey = alice.publicKey;
     const escrowKeypair = new web3.Keypair();
+    let aliceBalanceStart = 1 * web3.LAMPORTS_PER_SOL;
 
     before(async () => {
-        let airdropSignatureAlice = await connection.requestAirdrop(alice.publicKey, 1 * web3.LAMPORTS_PER_SOL);
+        let airdropSignatureAlice = await connection.requestAirdrop(alice.publicKey, aliceBalanceStart);
          const latestBlockhash = await connection.getLatestBlockhash('confirmed');
      
          await connection.confirmTransaction({
@@ -215,6 +216,11 @@ describe("escrow", ()=>{
         const amountBN = new BN(amount*web3.LAMPORTS_PER_SOL).toArray("le", 8);
 
         console.log(amountBN);
+
+
+        const aliceBalanceBefore = await connection.getBalance(publicKey);
+        console.log('aliceBalanceBefore', aliceBalanceBefore);
+ 
         
         const initEscrowIx = new web3.TransactionInstruction({
           programId: programId,
@@ -275,15 +281,10 @@ describe("escrow", ()=>{
             expect(accountData.owner.toBase58()).to.equal(find_program_address[0].toBase58());
         }
 
+        // get alice solana balance
+        const aliceBalance = await connection.getBalance(publicKey);
+        expect(aliceBalance).to.approximately(aliceBalanceStart+50000000,10000000);
 
-        
-        //connection.getTokenAccountsByOwner
-        
-
-        //escrowKeypair,
-
-
-        
 
     });
 
@@ -292,8 +293,7 @@ describe("escrow", ()=>{
         const pda_account = await web3.PublicKey.findProgramAddress([Buffer.from("loan")], programId);
         console.log('pda_account', pda_account[0].toBase58());
         console.log('source', associatedSourceTokenAddr.toBase58());
-
-        const poolId = 0;
+       const poolId = 0;
         //get pda for pool account from poolId
         const [poolAccount, bumpSeed] = await web3.PublicKey.findProgramAddress(
           [Buffer.from('pool'),Buffer.from([poolId])],
@@ -343,10 +343,13 @@ describe("escrow", ()=>{
             expect(accountData.amount).to.equal(BigInt(1));
             console.log("------------------------------------------------------------");
         }
+
+        // get alice solana balance
+        const aliceBalance = await connection.getBalance(publicKey);
+        expect(aliceBalance).to.approximately(aliceBalanceStart-5000000,10000000);
         
         
         
-        //const programBalance = await connection.getBalance();
 
     });
 

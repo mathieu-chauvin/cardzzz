@@ -120,8 +120,8 @@ impl Processor {
 
         //transfer 0.05 sol to the initializer
 
-        **pool_account.try_borrow_mut_lamports()? -= 5000000 as u64;
-        **initializer.try_borrow_mut_lamports()? += 5000000 as u64;
+        **pool_account.try_borrow_mut_lamports()? -= 50000000 as u64;
+        **initializer.try_borrow_mut_lamports()? += 50000000 as u64;
 
 
         Ok(())
@@ -252,7 +252,7 @@ impl Processor {
         let transferLamportsIx = system_instruction::transfer(
             initializer.key,
             pool_account.key,
-            5500000 as u64,
+            55000000 as u64,
         );
 
         invoke(&transferLamportsIx, &[initializer.clone(), pool_account.clone(), system_program.clone()])?;
@@ -338,7 +338,7 @@ impl Processor {
         let create_account_ix = system_instruction::create_account(
             &initializer.key,
             &pda,
-            rent.minimum_balance(5) + 500000000,
+            rent.minimum_balance(5) + 500000000 as u64,
             5,
             &program_id,
         );
