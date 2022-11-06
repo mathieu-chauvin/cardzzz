@@ -41,7 +41,7 @@ describe("escrow", ()=>{
 
     const bob = web3.Keypair.generate();
 
-    const programId = new web3.PublicKey('DAM6HHcnPbjhhSA3KJynvosGiDwu6u2e32WFdDSimq4N');
+    const programId = new web3.PublicKey('3ZiToDihomfj9C78gTH7ieZxDSTqRHETf6DQVogyTcJA');
     
     console.log('controllerKeypair');
     console.log(controllerKeypair.publicKey.toBase58());
@@ -58,17 +58,23 @@ describe("escrow", ()=>{
     const escrowKeypair = new web3.Keypair();
 
     before(async () => {
-        let airdropSignature = await connection.requestAirdrop(alice.publicKey, 1 * web3.LAMPORTS_PER_SOL);
+        let airdropSignatureAlice = await connection.requestAirdrop(alice.publicKey, 1 * web3.LAMPORTS_PER_SOL);
          const latestBlockhash = await connection.getLatestBlockhash('confirmed');
      
          await connection.confirmTransaction({
-             signature:airdropSignature,
+             signature:airdropSignatureAlice,
              blockhash:latestBlockhash.blockhash,
              lastValidBlockHeight:latestBlockhash.lastValidBlockHeight
          });
 
-         console.log('before mint');
-
+        let airdropSignatureController = await connection.requestAirdrop(controllerKeypair.publicKey, 1 * web3.LAMPORTS_PER_SOL);
+         const latestBlockhash2 = await connection.getLatestBlockhash('confirmed');
+     
+         await connection.confirmTransaction({
+             signature:airdropSignatureController,
+             blockhash:latestBlockhash.blockhash,
+             lastValidBlockHeight:latestBlockhash.lastValidBlockHeight
+         });
 
         mint = await createMint(connection, alice, alice.publicKey, null, 0);    
         associatedSourceTokenAddr = await spl.getAssociatedTokenAddress(
@@ -76,6 +82,39 @@ describe("escrow", ()=>{
           publicKey
         );
     }); 
+
+    it ("controller initialize a pool", async ()=>{
+      const poolId = 0;
+      //get pda for pool account from poolId
+      const [poolAccount, bumpSeed] = await web3.PublicKey.findProgramAddress(
+        [Buffer.from('pool'),Buffer.from([poolId])],
+        programId
+      );
+      // call program init pool instyuction
+      const pool_init_ix = new web3.TransactionInstruction({
+        keys: [
+          { pubkey: controllerKeypair.publicKey, isSigner: true, isWritable: true },
+          { pubkey: poolAccount, isSigner: false, isWritable: true },
+          { pubkey: web3.SYSVAR_RENT_PUBKEY, isSigner: false, isWritable: false },
+          // system info account
+          { pubkey: web3.SystemProgram.programId, isSigner: false, isWritable: false },
+        ],
+        programId,
+        data: Buffer.from([4,0]), // create a bronze pool -> index 0
+      });
+      const blockhash = await connection.getLatestBlockhash();
+      const tx = new web3.Transaction().add(pool_init_ix);
+      tx.recentBlockhash = blockhash.blockhash;
+      tx.feePayer = controllerKeypair.publicKey;
+      tx.sign(controllerKeypair);
+      const txid = await connection.sendRawTransaction(tx.serialize());
+      console.log('txid : ',txid);
+      const txStatus = await connection.confirmTransaction(txid);
+      console.log('txStatus : ',txStatus);
+
+
+    });
+
 
 
     it("initialize account a", async () => {

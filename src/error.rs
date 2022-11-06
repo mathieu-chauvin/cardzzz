@@ -17,8 +17,11 @@ pub enum EscrowError {
     #[error("Amount Overflow")]
     AmountOverflow,
     /// Invalid Initializer
-    #[error("Invalid Initializer Account")]
+    #[error("Invalid Initializer")]
     InvalidInitializer,
+    /// Invalid Controller
+    #[error("Invalid Controller")]
+    InvalidController,
     /// Invalid Temp Token Account
     #[error("Invalid Temp Token Account")]
     InvalidTempTokenAccount,
