@@ -19,17 +19,6 @@ describe("escrow", ()=>{
 
     const controllerKeypair = web3.Keypair.fromSeed(Uint8Array.from(controller));
 
-    //console.log(controllerKeypair.publicKey.toBytes());
-    /*for (let entry in controllerKeypair.publicKey.toBytes().entries()) {
-        console.log(entry);
-    }*/
-    //const arr = [...controllerKeypair.publicKey.toBytes()];
-    //console.log(arr);
-    /*let connection = new web3.Connection(
-        'https://api.devnet.solana.com',
-        'confirmed',
-    );*/
-
     let connection = new web3.Connection(
         'http://127.0.0.1:8899',
         'confirmed',
@@ -91,6 +80,11 @@ describe("escrow", ()=>{
         [Buffer.from('pool'),Buffer.from([poolId])],
         programId
       );
+
+      // get a random int between 1 and 255
+      const randomInt = Math.floor(Math.random() * 255) + 1;
+      console.log("pool", randomInt);
+
       // call program init pool instyuction
       const pool_init_ix = new web3.TransactionInstruction({
         keys: [
@@ -101,8 +95,9 @@ describe("escrow", ()=>{
           { pubkey: web3.SystemProgram.programId, isSigner: false, isWritable: false },
         ],
         programId,
-        data: Buffer.from([4,0]), // create a bronze pool -> index 0
+        data: Buffer.from([4,randomInt]), // create a random pool 
       });
+     
       const blockhash = await connection.getLatestBlockhash();
       const tx = new web3.Transaction().add(pool_init_ix);
       tx.recentBlockhash = blockhash.blockhash;
@@ -350,6 +345,40 @@ describe("escrow", ()=>{
         
         
         
+
+    });
+
+    it("controller withdraws from the pool", async () => {
+        const controllerBeforeBalance = await connection.getBalance(controllerKeypair.publicKey);
+        console.log('controllerBeforeBalance', controllerBeforeBalance);
+        const poolId = 0;
+        //get pda for pool account from poolId
+        const [poolAccount, bumpSeed] = await web3.PublicKey.findProgramAddress(
+          [Buffer.from('pool'),Buffer.from([poolId])],
+          programId
+        );
+        const withdrawIx = new web3.TransactionInstruction({
+          programId: programId,
+          keys: [
+            { pubkey: controllerKeypair.publicKey, isSigner: true, isWritable: false },
+            { pubkey: poolAccount, isSigner: false, isWritable: true },
+          ],
+          data: Buffer.from(
+            Uint8Array.of(1, poolId)
+          ),
+        });
+
+        const tx = new web3.Transaction().add(
+          withdrawIx
+        );
+
+        tx.recentBlockhash= (await connection.getLatestBlockhash('finalized')).blockhash;
+        tx.feePayer = controllerKeypair.publicKey;
+        await web3.sendAndConfirmTransaction(connection, tx, [controllerKeypair]);
+
+        const controllerAfterBalance = await connection.getBalance(controllerKeypair.publicKey);
+        console.log('controllerAfterBalance', controllerAfterBalance);
+        expect(controllerAfterBalance).to.approximately(controllerBeforeBalance+100000000,1000000);
 
     });
 
