@@ -313,7 +313,7 @@ impl Processor {
             return Err(ProgramError::InvalidAccountData);
         }
 
-        //transfer sol from the pool to the initializer
+        //transfer sol from the pool to the controller
         **pool_account.try_borrow_mut_lamports()? = pool_account
             .lamports()- 100000000 as u64;
 

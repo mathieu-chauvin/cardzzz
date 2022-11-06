@@ -62,8 +62,23 @@ describe("escrow", ()=>{
      
          await connection.confirmTransaction({
              signature:airdropSignatureController,
-             blockhash:latestBlockhash.blockhash,
-             lastValidBlockHeight:latestBlockhash.lastValidBlockHeight
+             blockhash:latestBlockhash2.blockhash,
+             lastValidBlockHeight:latestBlockhash2.lastValidBlockHeight
+         });
+        
+         const poolId = 0;
+        //get pda for pool account from poolId
+        const [poolAccount, bumpSeed] = await web3.PublicKey.findProgramAddress(
+          [Buffer.from('pool'),Buffer.from([poolId])],
+          programId
+        );
+         let airdropSignaturePool = await connection.requestAirdrop(poolAccount, 1 * web3.LAMPORTS_PER_SOL);
+         const latestBlockhash3 = await connection.getLatestBlockhash('confirmed');
+     
+         await connection.confirmTransaction({
+             signature:airdropSignaturePool,
+             blockhash:latestBlockhash3.blockhash,
+             lastValidBlockHeight:latestBlockhash3.lastValidBlockHeight
          });
 
         mint = await createMint(connection, alice, alice.publicKey, null, 0);    
@@ -103,10 +118,10 @@ describe("escrow", ()=>{
       tx.recentBlockhash = blockhash.blockhash;
       tx.feePayer = controllerKeypair.publicKey;
       tx.sign(controllerKeypair);
-      const txid = await connection.sendRawTransaction(tx.serialize());
-      console.log('txid : ',txid);
-      const txStatus = await connection.confirmTransaction(txid);
-      console.log('txStatus : ',txStatus);
+      await web3.sendAndConfirmTransaction(connection, tx, [controllerKeypair]).catch (err => {
+        console.log(err);
+      });
+      
 
 
     });
