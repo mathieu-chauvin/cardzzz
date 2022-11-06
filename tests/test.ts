@@ -126,7 +126,12 @@ describe("escrow", ()=>{
 
 
         //const chest_mint_pda = web3.PublicKey.findProgramAddressSync([Buffer.from("chest"), mint.toBuffer()],programKey);
-
+        const poolId = 0;
+        //get pda for pool account from poolId
+        const [poolAccount, bumpSeed] = await web3.PublicKey.findProgramAddress(
+          [Buffer.from('pool'),Buffer.from([poolId])],
+          programId
+        );
         console.log('mint', mint.toBase58());
         // Get the token account of the fromWallet address, and if it does not exist, create it
         const fromTokenAccount = await getOrCreateAssociatedTokenAccount(
@@ -221,8 +226,10 @@ describe("escrow", ()=>{
               isWritable: true,
             },
             { pubkey: escrowKeypair.publicKey, isSigner: false, isWritable: true },
+            { pubkey: poolAccount, isSigner: false, isWritable: true },
             { pubkey: web3.SYSVAR_RENT_PUBKEY, isSigner: false, isWritable: false },
             { pubkey: spl.TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
+            { pubkey: web3.SystemProgram.programId, isSigner: false, isWritable: false },
           ],
           data: Buffer.from(
            //Uint8Array.of(0)
@@ -286,7 +293,13 @@ describe("escrow", ()=>{
         console.log('pda_account', pda_account[0].toBase58());
         console.log('source', associatedSourceTokenAddr.toBase58());
 
-
+        const poolId = 0;
+        //get pda for pool account from poolId
+        const [poolAccount, bumpSeed] = await web3.PublicKey.findProgramAddress(
+          [Buffer.from('pool'),Buffer.from([poolId])],
+          programId
+        );
+        
         const paybackIx = new web3.TransactionInstruction({
           programId: programId,
           keys: [
@@ -298,7 +311,9 @@ describe("escrow", ()=>{
             },
             { pubkey: associatedSourceTokenAddr, isSigner: false, isWritable: true },
             { pubkey: escrowKeypair.publicKey, isSigner: false, isWritable: true },
+            { pubkey: poolAccount, isSigner: false, isWritable: true },
             { pubkey: web3.SYSVAR_RENT_PUBKEY, isSigner: false, isWritable: false },
+            { pubkey: web3.SystemProgram.programId, isSigner: false, isWritable: false },
             { pubkey: spl.TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
             { pubkey: pda_account[0], isSigner: false, isWritable: false },
           ],

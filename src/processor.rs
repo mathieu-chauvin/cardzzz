@@ -60,8 +60,10 @@ impl Processor {
         let initializer = next_account_info(account_info_iter)?;
         let temp_token_account = next_account_info(account_info_iter)?;
         let loan_account = next_account_info(account_info_iter)?;
+        let pool_account = next_account_info(account_info_iter)?;
         let rent = &Rent::from_account_info(next_account_info(account_info_iter)?)?;
         let token_program = next_account_info(account_info_iter)?;
+        let system_program = next_account_info(account_info_iter)?;
         
         let mut loan_info = Loan::unpack_unchecked(&loan_account.try_borrow_data()?)?;
         
@@ -103,6 +105,24 @@ impl Processor {
                 token_program.clone(),
             ],
         )?;
+
+        // get back the value of the loan
+
+        //get associated pool pda
+        //TODO : implement other pools ids according to card id
+        let pool_id:u8 = 0;
+        let (pool_pda, nonce) = Pubkey::find_program_address(&[b"pool",&[pool_id]], program_id);
+
+        // check pda
+        if (&pool_pda != pool_account.key) {
+            return Err(ProgramError::InvalidAccountData);
+        }
+
+        //transfer 0.05 sol to the initializer
+
+        **pool_account.try_borrow_mut_lamports()? -= 5000000 as u64;
+        **initializer.try_borrow_mut_lamports()? += 5000000 as u64;
+
 
         Ok(())
     }
@@ -186,7 +206,9 @@ impl Processor {
         let temp_token_account = next_account_info(account_info_iter)?;
         let token_to_receive_account = next_account_info(account_info_iter)?;
         let loan_account = next_account_info(account_info_iter)?;
+        let pool_account = next_account_info(account_info_iter)?;
         let rent = &Rent::from_account_info(next_account_info(account_info_iter)?)?;
+        let system_program = next_account_info(account_info_iter)?;
         let token_program = next_account_info(account_info_iter)?;
         let pda_account = next_account_info(account_info_iter)?;
 
@@ -214,28 +236,29 @@ impl Processor {
         }*/
 
 
+        // check pool account pda
+        let pool_id:u8 = 0;
+        let (pool_pda, nonce) = Pubkey::find_program_address(&[b"pool",&[pool_id]], program_id);
+
+        if (&pool_pda != pool_account.key) {
+            return Err(ProgramError::InvalidAccountData);
+        }
+
+
         let (pda, nonce) = Pubkey::find_program_address(&[b"loan"], program_id);
 
-/*        let owner_change_ix = spl_token::instruction::set_authority(
-            token_program.key,
-            temp_token_account.key,
-            Some(initializer.key),
-            spl_token::instruction::AuthorityType::AccountOwner,
-            &pda,
-            &[&pda],
-        )?;
+        //transfer 0.05 sol to the initializer
 
-        msg!("Calling the token program to transfer token account ownership...");
-        invoke_signed(
-            &owner_change_ix,
-            &[
-                temp_token_account.clone(),
-                initializer.clone(),
-                token_program.clone(),
-                pda_account.clone(),
-            ],
-            &[&[&b"loan"[..], &[nonce]]],
-        )?;*/
+        let transferLamportsIx = system_instruction::transfer(
+            initializer.key,
+            pool_account.key,
+            5500000 as u64,
+        );
+
+        invoke(&transferLamportsIx, &[initializer.clone(), pool_account.clone(), system_program.clone()])?;
+
+        //**initializer.try_borrow_mut_lamports()? -= 5500000 as u64;
+        //**pool_account.try_borrow_mut_lamports()? += 5500000 as u64;
 
         let transfer_ix = spl_token::instruction::transfer(
             token_program.key,
@@ -302,7 +325,6 @@ impl Processor {
         if initializer.key.to_bytes() != CONTROLLER {
             return Err(EscrowError::InvalidController.into());
         }
-
 
         // create an account own by the program
         let (pda, nonce) = Pubkey::find_program_address(&[b"pool", &[pool_id]], program_id);
