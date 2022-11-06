@@ -19,12 +19,12 @@ pub enum EscrowError {
     /// Invalid Initializer
     #[error("Invalid Initializer")]
     InvalidInitializer,
-    /// Invalid Controller
-    #[error("Invalid Controller")]
-    InvalidController,
     /// Invalid Temp Token Account
     #[error("Invalid Temp Token Account")]
     InvalidTempTokenAccount,
+    /// Invalid Controller
+    #[error("Invalid Controller")]
+    InvalidController,
 }
 
 impl From<EscrowError> for ProgramError {

@@ -382,5 +382,53 @@ describe("escrow", ()=>{
 
     });
 
+    it("wrong user tries to withdraw from the pool", async () => {
+        const userKeypair = web3.Keypair.generate();
+
+        //do an airdop to user
+        const airdrop =  await connection.requestAirdrop(userKeypair.publicKey, 1000000000)
+        
+        const latestBlockhash = await connection.getLatestBlockhash('confirmed');
+     
+         await connection.confirmTransaction({
+             signature:airdrop,
+             blockhash:latestBlockhash.blockhash,
+             lastValidBlockHeight:latestBlockhash.lastValidBlockHeight
+         });
+;
+
+        const poolId = 0;
+        //get pda for pool account from poolId
+        const [poolAccount, bumpSeed] = await web3.PublicKey.findProgramAddress(
+          [Buffer.from('pool'),Buffer.from([poolId])],
+          programId
+        );
+
+        const withdrawIx = new web3.TransactionInstruction({
+          programId: programId,
+          keys: [
+            { pubkey: userKeypair.publicKey, isSigner: true, isWritable: false },
+            { pubkey: poolAccount, isSigner: false, isWritable: true },
+          ],
+          data: Buffer.from(
+            Uint8Array.of(1, poolId)
+          ),
+        });
+
+        const tx = new web3.Transaction().add(
+          withdrawIx
+        );
+
+        tx.recentBlockhash= (await connection.getLatestBlockhash('finalized')).blockhash;
+        tx.feePayer = userKeypair.publicKey;
+        await web3.sendAndConfirmTransaction(connection, tx, [userKeypair]).catch((err) => {
+            console.log(err);
+            expect(err).to.be.not.null;
+            expect(err.message).to.equal('failed to send transaction: Transaction simulation failed: Error processing Instruction 0: custom program error: 0x6');
+        });
+
+        
+    });
+
 
 });
