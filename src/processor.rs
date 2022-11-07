@@ -67,25 +67,44 @@ impl Processor {
         let mint = TokenAccount::unpack(&temp_token_account.try_borrow_data()?)?.mint;
         
         let clock = Clock::get()?;
+
         if !initializer.is_signer {
             return Err(ProgramError::MissingRequiredSignature);
+        }
+
+        if *temp_token_account.owner != spl_token::ID {
+            return Err(EscrowError::InvalidTempTokenAccount.into());
         }
         
         if !rent.is_exempt(loan_account.lamports(), loan_account.data_len()) {
             return Err(EscrowError::NotRentExempt.into());
         }
 
+        assert_eq!(rent, &Rent::default());
+        assert_eq!(token_program.key, &spl_token::ID);
+        assert_eq!(system_program.key, &solana_program::system_program::ID);
+
         if loan_info.is_initialized() {
             return Err(ProgramError::AccountAlreadyInitialized);
         }
+        
+        if loan_account.owner != program_id {
+            return Err(ProgramError::IncorrectProgramId);
+        }
 
+
+        // TODO : add test for mint
+
+        let token_account = TokenAccount::unpack(&temp_token_account.try_borrow_data()?)?;
+        if token_account.amount != 1 {
+            return Err(EscrowError::ExpectedAmountMismatch.into());
+        } 
 
         loan_info.is_initialized = true;
         loan_info.initializer_pubkey = *initializer.key;
         loan_info.temp_token_account_pubkey = *temp_token_account.key;
         loan_info.expected_amount = amount;
         let start_time = clock.unix_timestamp;
-        msg!("start_time: {}", start_time);
         loan_info.start_time = start_time;
 
         Loan::pack(loan_info, &mut loan_account.try_borrow_mut_data()?)?;
@@ -158,12 +177,25 @@ impl Processor {
         if !initializer.is_signer {
             return Err(ProgramError::MissingRequiredSignature);
         }
+        assert_eq!(rent, &Rent::default());
+        assert_eq!(token_program.key, &spl_token::ID);
+        assert_eq!(system_program.key, &solana_program::system_program::ID);
 
-
+        if *temp_token_account.owner != spl_token::ID {
+            return Err(EscrowError::InvalidTempTokenAccount.into());
+        }
+        
         if !rent.is_exempt(loan_account.lamports(), loan_account.data_len()) {
             return Err(EscrowError::NotRentExempt.into());
         }
 
+        if loan_account.owner != program_id {
+            return Err(ProgramError::IncorrectProgramId);
+        }
+
+        if !loan_info.is_initialized() {
+            return Err(ProgramError::UninitializedAccount);
+        }
 
         if initializer.key != &loan_info.initializer_pubkey {
             return Err(EscrowError::InvalidInitializer.into());
@@ -183,18 +215,13 @@ impl Processor {
         }
 
         // get difference between start time of the loan and current time
-        msg!("start time : {}", loan_info.start_time);
-        msg!("current time : {}", clock.unix_timestamp);
         let time_diff = clock.unix_timestamp - loan_info.start_time;
-        msg!("time diff : {}", time_diff);
 
         // calculate interest
+        //handling floats is hard. Trying to keep numbers as integers
         let interest = (AMOUNT_MAX[0] as u128 * INTERESTS[0] as u128 * time_diff as u128) / 365 / 24 / 3600 / 100000000;
-        msg!("interest : {}", interest);
 
         let (pda, nonce) = Pubkey::find_program_address(&[b"loan"], program_id);
-        //handling floats is hard. Trying to keep numbers as integers
-        //let amount_with_interest = AMOUNT_MAX[0] + (AMOUNT_MAX[0]*INTERESTS[0]/100000000) as u64;
         let amount_with_interest = AMOUNT_MAX[0] + interest as u64;
         let transferLamportsIx = system_instruction::transfer(
             initializer.key,
