@@ -11,6 +11,25 @@ import sleep from 'sleep-promise';
 
 const BN = require('bn.js');
 
+async function fund_pool(connection: web3.Connection, programId:web3.PublicKey) {
+        const poolId = 0;
+        //get pda for pool account from poolId
+        const [poolAccount, bumpSeed] = await web3.PublicKey.findProgramAddress(
+          [Buffer.from('pool'),Buffer.from([poolId])],
+          programId
+        );
+         let airdropSignaturePool = await connection.requestAirdrop(poolAccount, 1 * web3.LAMPORTS_PER_SOL);
+         const latestBlockhash3 = await connection.getLatestBlockhash('confirmed');
+     
+         await connection.confirmTransaction({
+             signature:airdropSignaturePool,
+             blockhash:latestBlockhash3.blockhash,
+             lastValidBlockHeight:latestBlockhash3.lastValidBlockHeight
+         });
+
+         return;
+}
+
 describe("escrow", ()=>{
 
     //const programKey = new web3.PublicKey("85hpvNKP1PdhwFDPYN8aaGV9owqDEXFD6CLNKZ7XY41m");
@@ -61,20 +80,7 @@ describe("escrow", ()=>{
              lastValidBlockHeight:latestBlockhash2.lastValidBlockHeight
          });
         
-         const poolId = 0;
-        //get pda for pool account from poolId
-        const [poolAccount, bumpSeed] = await web3.PublicKey.findProgramAddress(
-          [Buffer.from('pool'),Buffer.from([poolId])],
-          programId
-        );
-         let airdropSignaturePool = await connection.requestAirdrop(poolAccount, 1 * web3.LAMPORTS_PER_SOL);
-         const latestBlockhash3 = await connection.getLatestBlockhash('confirmed');
-     
-         await connection.confirmTransaction({
-             signature:airdropSignaturePool,
-             blockhash:latestBlockhash3.blockhash,
-             lastValidBlockHeight:latestBlockhash3.lastValidBlockHeight
-         });
+         
 
         mint = await createMint(connection, alice, alice.publicKey, null, 0);    
         associatedSourceTokenAddr = await spl.getAssociatedTokenAddress(
@@ -87,7 +93,7 @@ describe("escrow", ()=>{
      
       // get a random int between 1 and 255
       const randomInt = Math.floor(Math.random() * 255) + 1; 
-      const poolId = randomInt;
+      const poolId =0 ;
       
       //get pda for pool account from poolId
       const [poolAccount, bumpSeed] = await web3.PublicKey.findProgramAddress(
@@ -105,7 +111,7 @@ describe("escrow", ()=>{
           { pubkey: web3.SystemProgram.programId, isSigner: false, isWritable: false },
         ],
         programId,
-        data: Buffer.from([4,randomInt]), // create a random pool 
+        data: Buffer.from([4,poolId]), // create a random pool 
       });
      
       const blockhash = await connection.getLatestBlockhash();
@@ -123,8 +129,8 @@ describe("escrow", ()=>{
 
     it("initialize account a", async () => {
 
-         // airdrop 5 sol to alice
-
+        
+        await fund_pool(connection, programId);
          
         const poolId = 0;
         //get pda for pool account from poolId
@@ -235,7 +241,9 @@ describe("escrow", ()=>{
         tx.recentBlockhash= (await connection.getLatestBlockhash('finalized')).blockhash; 
         tx.feePayer = publicKey;
 
-        await web3.sendAndConfirmTransaction(connection, tx, [alice, escrowKeypair,tempXTokenAccountKeypair]);
+        await web3.sendAndConfirmTransaction(connection, tx, [alice, escrowKeypair,tempXTokenAccountKeypair]).catch (err => {
+          console.log(err);
+        });
 
         const tokenAccount = await connection.getAccountInfo(tempXTokenAccountKeypair.publicKey);
 
