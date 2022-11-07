@@ -82,15 +82,16 @@ describe("escrow", ()=>{
     }); 
 
     it ("controller initialize a pool", async ()=>{
-      const poolId = 0;
+     
+      // get a random int between 1 and 255
+      const randomInt = Math.floor(Math.random() * 255) + 1; 
+      const poolId = randomInt;
+      
       //get pda for pool account from poolId
       const [poolAccount, bumpSeed] = await web3.PublicKey.findProgramAddress(
-        [Buffer.from('pool'),Buffer.from([poolId])],
+        [Buffer.from('pool'), Buffer.from([poolId])],
         programId
       );
-
-      // get a random int between 1 and 255
-      const randomInt = Math.floor(Math.random() * 255) + 1;
 
       // call program init pool instyuction
       const pool_init_ix = new web3.TransactionInstruction({

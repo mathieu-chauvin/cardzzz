@@ -238,11 +238,6 @@ impl Processor {
         let rent = &Rent::from_account_info(rent_account)?;
         let system_info = next_account_info(account_info_iter)?;
 
-        // check sysvar account
-        if *system_info.key != SYSVAR_ID {
-            return Err(ProgramError::InvalidAccountData);
-        } 
-
         if !initializer.is_signer {
             return Err(ProgramError::MissingRequiredSignature);
         }
@@ -254,7 +249,7 @@ impl Processor {
         // create an account own by the program
         let (pda, nonce) = Pubkey::find_program_address(&[b"pool", &[pool_id]], program_id);
 
-        if &pda != pool_account.key {
+        if pda != *pool_account.key {
             return Err(ProgramError::InvalidAccountData);
         }
         
