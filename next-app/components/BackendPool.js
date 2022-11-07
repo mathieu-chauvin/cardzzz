@@ -1,4 +1,3 @@
-import styles from '../styles/Home.module.css'
 import { useMetaplex } from "./useMetaplex";
 import { useState, useEffect } from "react";
 import { useWallet, useConnection } from '@solana/wallet-adapter-react';
@@ -8,31 +7,34 @@ import { DataTable2 } from './DataTable2';
 import * as spl from "@solana/spl-token";
 import { BN } from 'bn.js';
 
-export const ListOffers = (props) => {
+export const BackendPool = (props) => {
     const { metaplex } = useMetaplex();
     const wallet = useWallet();
 
     const { connection } = useConnection();
 
-    const [rowsAL, setRowsAL] = useState([]);
     const programId = new web3.PublicKey('FjJHbCgdMKSe5K6Xp9iksjJeWCdvz6KLbDN5xUE67RUm');
 
     const [rows, setRows] = useState([]);
+    
+    
+    async function getPools() {
+        //let myNfts = await metaplex.nfts().findAllByOwner(metaplex.identity().publicKey);
+        
+          const programAccounts = await connection.getProgramAccounts(programId);
+          console.log(programAccounts);
 
-    function deserializeOffer(data) {
-      const is_initialized_dst = data.slice(0, 1);
-      const initializer_pubkey_dst = data.slice(1, 33);
-      const temp_token_account_pubkey_dst = data.slice(33, 65);
-      const expected_amount_dst = data.slice(65, 73);
-      const offer = {
-        is_initialized_dst: is_initialized_dst,
-        initializer_pubkey_dst: initializer_pubkey_dst,
-        temp_token_account_pubkey_dst: temp_token_account_pubkey_dst,
-        expected_amount_dst: expected_amount_dst
-      };
-        return offer;
-    }
+          let offers = [];
+          let id = 0;
 
+          programAccounts.forEach(async (programAccount) => {
+              
+          });
+
+          setRows(offers);
+  
+          //programAccounts.forEach(async (programAccount) => {
+      }
     
 
     useEffect(() => {
@@ -65,7 +67,7 @@ export const ListOffers = (props) => {
   
           //programAccounts.forEach(async (programAccount) => {
       } 
-      getOffers();
+      getPools(); 
         
     },[]);
 
@@ -74,11 +76,29 @@ export const ListOffers = (props) => {
     return wallet.connected && (
       <div>
         
-            <h3>Active loans</h3>
-            {rowsAL.length? <DataTable rows={rowsAL}/>: <p>No active loans</p>}
-              <h3>New possible loans</h3>
-              {rows.length? <DataTable2 rows={rows} onChangeAL={(rowsA) => setRowsAL(rowsA)} />: null }
-            
+           <input type="text" placeholder="ID" value={props.id} onChange={props.handleIdChange} />
+           <button onClick={props.handleInit}>Init</button> 
+
+            <h4>Pool status</h4>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Id</th>
+                        <th>Value</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {rows.map((row) => (
+                        <tr key={row.id}>
+                            <td>{row.id}</td>
+                            <td>{row.amount}</td>
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
+
+           <input type="text" placeholder="ID" value={props.id} onChange={props.handleIdChange} />
+           <button onClick={props.handleWithdraw}>Withdraw</button> 
       </div>
     );
 };

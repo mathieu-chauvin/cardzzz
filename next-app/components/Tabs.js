@@ -10,7 +10,7 @@ import {ListReimbursments} from './ListReimbursments';
 
 import { ShowNFTs } from './ShowNFTs';
 import { StakeCard } from './StakeCard';
-import DataTable from './DataTable';
+import { BackendPool } from './BackendPool';
 
 export const Tabs = (props) =>  {
 
@@ -33,6 +33,7 @@ export const Tabs = (props) =>  {
                     <Tab label="Borrow" value="1" />
                     <Tab label="Lend" value="2" />
                     <Tab label="Repayment" value="3" />
+                    <Tab label="BackendPool" value="4" />
                   </TabList>
                 </Box>
                 <TabPanel value="1">
@@ -48,7 +49,11 @@ export const Tabs = (props) =>  {
                 <TabPanel value="3">
                     <ListReimbursments/>
                 </TabPanel>
-               
+ 
+                <TabPanel value="4">
+                    <BackendPool/>
+                </TabPanel>
+          
               </TabContext>
             </Box>
     )
