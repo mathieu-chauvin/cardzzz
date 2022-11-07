@@ -124,10 +124,6 @@ describe("escrow", ()=>{
          // airdrop 5 sol to alice
 
          
-        //const pda_nft_account = await getOrCreateAssociatedTokenAccount(connection, alice.publicKey, chest_a_b[0]);
-
-
-        //const chest_mint_pda = web3.PublicKey.findProgramAddressSync([Buffer.from("chest"), mint.toBuffer()],programKey);
         const poolId = 0;
         //get pda for pool account from poolId
         const [poolAccount, bumpSeed] = await web3.PublicKey.findProgramAddress(
@@ -252,13 +248,14 @@ describe("escrow", ()=>{
 
         // get alice solana balance
         const aliceBalance = await connection.getBalance(publicKey);
-        expect(aliceBalance).to.approximately(aliceBalanceStart+50000000,10000000);
+        expect(aliceBalance).to.approximately(aliceBalanceStart+100000000,10000000);
 
 
     });
 
     it("alice repays her loan", async () => {
 
+        const aliceBalancebefore = await connection.getBalance(publicKey);
         const pda_account = await web3.PublicKey.findProgramAddress([Buffer.from("loan")], programId);
        const poolId = 0;
         //get pda for pool account from poolId
@@ -285,7 +282,6 @@ describe("escrow", ()=>{
             { pubkey: pda_account[0], isSigner: false, isWritable: false },
           ],
           data: Buffer.from(
-           //Uint8Array.of(0)
             Uint8Array.of(2)
           ),
        });
@@ -296,7 +292,9 @@ describe("escrow", ()=>{
 
         tx.recentBlockhash= (await connection.getLatestBlockhash('finalized')).blockhash;
         tx.feePayer = publicKey;
-        await web3.sendAndConfirmTransaction(connection, tx, [alice]);
+        await web3.sendAndConfirmTransaction(connection, tx, [alice]).catch((err) => {
+          console.log(err);
+        });
 
 
         const tokenAccount = await connection.getAccountInfo(associatedSourceTokenAddr);
@@ -308,7 +306,7 @@ describe("escrow", ()=>{
 
         // get alice solana balance
         const aliceBalance = await connection.getBalance(publicKey);
-        expect(aliceBalance).to.approximately(aliceBalanceStart-5000000,10000000);
+        expect(aliceBalance).to.approximately(aliceBalanceStart-(100000000*(0.2)),10000000);
         
         
         

@@ -14,7 +14,7 @@ use solana_program::{
 use spl_token::state::Account as TokenAccount;
 
 
-use crate::{constants::CONTROLLER, error::EscrowError, instruction::LoanInstruction, state::Loan};
+use crate::{constants::{CONTROLLER, AMOUNT_MAX, INTERESTS}, error::EscrowError, instruction::LoanInstruction, state::Loan};
 pub struct Processor;
 impl Processor {
     pub fn process(
@@ -117,8 +117,8 @@ impl Processor {
 
         //transfer 0.05 sol to the initializer
 
-        **pool_account.try_borrow_mut_lamports()? -= 50000000 as u64;
-        **initializer.try_borrow_mut_lamports()? += 50000000 as u64;
+        **pool_account.try_borrow_mut_lamports()? -= AMOUNT_MAX[0] as u64;
+        **initializer.try_borrow_mut_lamports()? += AMOUNT_MAX[0] as u64;
 
 
         Ok(())
@@ -173,19 +173,15 @@ impl Processor {
 
 
         let (pda, nonce) = Pubkey::find_program_address(&[b"loan"], program_id);
-
-        //transfer 0.05 sol to the initializer
-
+        //handling floats is hard. Trying to keep numbers as integers
+        let amount_with_interest = AMOUNT_MAX[0] + (AMOUNT_MAX[0]*INTERESTS[0]/100000000) as u64;
         let transferLamportsIx = system_instruction::transfer(
             initializer.key,
             pool_account.key,
-            55000000 as u64,
+            amount_with_interest,
         );
 
         invoke(&transferLamportsIx, &[initializer.clone(), pool_account.clone(), system_program.clone()])?;
-
-        //**initializer.try_borrow_mut_lamports()? -= 5500000 as u64;
-        //**pool_account.try_borrow_mut_lamports()? += 5500000 as u64;
 
         let transfer_ix = spl_token::instruction::transfer(
             token_program.key,
