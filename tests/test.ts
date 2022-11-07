@@ -7,6 +7,8 @@ import {expect} from 'chai';
 import 'mocha';
 //import { sign } from 'crypto';
 
+import sleep from 'sleep-promise';
+
 const BN = require('bn.js');
 
 describe("escrow", ()=>{
@@ -183,9 +185,9 @@ describe("escrow", ()=>{
 
         const amount = 0.5;
         const createEscrowAccountIx = web3.SystemProgram.createAccount({
-          space: 73,
+          space: 81,
           lamports: await connection.getMinimumBalanceForRentExemption(
-            73
+            81
           ),
           fromPubkey: publicKey,
           newAccountPubkey: escrowKeypair.publicKey,
@@ -254,7 +256,8 @@ describe("escrow", ()=>{
     });
 
     it("alice repays her loan", async () => {
-
+        // sleep for 1 second
+        await sleep(1000);
         const aliceBalancebefore = await connection.getBalance(publicKey);
         const pda_account = await web3.PublicKey.findProgramAddress([Buffer.from("loan")], programId);
        const poolId = 0;

@@ -6,12 +6,12 @@ use solana_program::{
     program_error::ProgramError,
     program_pack::{IsInitialized, Pack},
     pubkey::Pubkey,
-    sysvar::{rent::Rent, Sysvar},
+    sysvar::{rent::Rent, clock::Clock ,Sysvar},
     sysvar::ID as SYSVAR_ID,
     system_instruction,
 };
 
-use spl_token::state::Account as TokenAccount;
+use spl_token::state::{Account as TokenAccount,Mint};
 
 
 use crate::{constants::{CONTROLLER, AMOUNT_MAX, INTERESTS}, error::EscrowError, instruction::LoanInstruction, state::Loan};
@@ -63,7 +63,10 @@ impl Processor {
         let system_program = next_account_info(account_info_iter)?;
         
         let mut loan_info = Loan::unpack_unchecked(&loan_account.try_borrow_data()?)?;
+
+        let mint = TokenAccount::unpack(&temp_token_account.try_borrow_data()?)?.mint;
         
+        let clock = Clock::get()?;
         if !initializer.is_signer {
             return Err(ProgramError::MissingRequiredSignature);
         }
@@ -76,12 +79,18 @@ impl Processor {
             return Err(ProgramError::AccountAlreadyInitialized);
         }
 
+
         loan_info.is_initialized = true;
         loan_info.initializer_pubkey = *initializer.key;
         loan_info.temp_token_account_pubkey = *temp_token_account.key;
         loan_info.expected_amount = amount;
+        let start_time = clock.unix_timestamp;
+        msg!("start_time: {}", start_time);
+        loan_info.start_time = start_time;
 
         Loan::pack(loan_info, &mut loan_account.try_borrow_mut_data()?)?;
+
+
         let (pda, _nonce) = Pubkey::find_program_address(&[b"loan"], program_id);
 
         let owner_change_ix = spl_token::instruction::set_authority(
@@ -115,7 +124,7 @@ impl Processor {
             return Err(ProgramError::InvalidAccountData);
         }
 
-        //transfer 0.05 sol to the initializer
+        //transfer sol to the initializer
 
         **pool_account.try_borrow_mut_lamports()? -= AMOUNT_MAX[0] as u64;
         **initializer.try_borrow_mut_lamports()? += AMOUNT_MAX[0] as u64;
@@ -143,6 +152,8 @@ impl Processor {
         let pda_account = next_account_info(account_info_iter)?;
 
         let loan_info = Loan::unpack(&loan_account.try_borrow_data()?)?;
+        let clock = Clock::get()?;
+
 
         if !initializer.is_signer {
             return Err(ProgramError::MissingRequiredSignature);
@@ -171,10 +182,20 @@ impl Processor {
             return Err(ProgramError::InvalidAccountData);
         }
 
+        // get difference between start time of the loan and current time
+        msg!("start time : {}", loan_info.start_time);
+        msg!("current time : {}", clock.unix_timestamp);
+        let time_diff = clock.unix_timestamp - loan_info.start_time;
+        msg!("time diff : {}", time_diff);
+
+        // calculate interest
+        let interest = (AMOUNT_MAX[0] as u128 * INTERESTS[0] as u128 * time_diff as u128) / 365 / 24 / 3600 / 100000000;
+        msg!("interest : {}", interest);
 
         let (pda, nonce) = Pubkey::find_program_address(&[b"loan"], program_id);
         //handling floats is hard. Trying to keep numbers as integers
-        let amount_with_interest = AMOUNT_MAX[0] + (AMOUNT_MAX[0]*INTERESTS[0]/100000000) as u64;
+        //let amount_with_interest = AMOUNT_MAX[0] + (AMOUNT_MAX[0]*INTERESTS[0]/100000000) as u64;
+        let amount_with_interest = AMOUNT_MAX[0] + interest as u64;
         let transferLamportsIx = system_instruction::transfer(
             initializer.key,
             pool_account.key,
@@ -201,7 +222,6 @@ impl Processor {
                 initializer.clone(),
                 pda_account.clone(),
             ],
-            //&[&[b"loan", &[nonce]]],
             &[&[&b"loan"[..], &[nonce]]],
         )?;
 

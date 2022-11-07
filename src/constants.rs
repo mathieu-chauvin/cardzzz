@@ -9,7 +9,10 @@ pub const CONTROLLER : [u8; 32] = [
 ];
 
 // interests for each card level, 1000000 = 1%
-pub const INTERESTS : [u64; 3] = [20000000, 10000000, 5000000];
+// TEST INTERESTS : remove before production
+pub const INTERESTS : [u64; 5] = [200000000000000, 1000000, 1000000, 1000000, 1000000];
+// interests for production
+//pub const INTERESTS : [u64; 3] = [20000000, 10000000, 5000000];
 
 // amount max for each card level, in lamports
 pub const AMOUNT_MAX : [u64; 3] = [100000000, 500000000, 1000000000];
