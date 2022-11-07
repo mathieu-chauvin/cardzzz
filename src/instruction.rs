@@ -19,9 +19,14 @@ pub enum LoanInstruction {
         /// The amount party A expects to receive of token Y
         amount: u64,
     },
-    LendLoan {},
-    RepayLoan {},
-    ClaimLoan {}
+    RepayLoan {
+    },
+    WithdrawPool {
+        pool_id: u8,
+    },
+    InitPool {
+        pool_id: u8,
+    },
 
 }
 
@@ -36,11 +41,13 @@ impl LoanInstruction {
             0 => Self::InitLoan {
                 amount: Self::unpack_amount(rest)?,
             },
-            1 => Self::LendLoan {
+            1 => Self::WithdrawPool {
+                pool_id: Self::unpack_pool_id(rest)?,
             },
             2 => Self::RepayLoan {
             },
-            3 => Self::ClaimLoan {
+            4 => Self::InitPool {
+                pool_id: Self::unpack_pool_id(rest)?,
             },
             _ => return Err(InvalidInstruction.into()),
         })
@@ -54,5 +61,15 @@ impl LoanInstruction {
             .map(u64::from_le_bytes)
             .ok_or(InvalidInstruction)?;
         Ok(amount)
+    }
+
+    fn unpack_pool_id(input: &[u8]) -> Result<u8, ProgramError> {
+        msg!("input: {:?}", input);
+        let pool_id = input
+            .get(..1)
+            .and_then(|slice| slice.try_into().ok())
+            .map(u8::from_le_bytes)
+            .ok_or(InvalidInstruction)?;
+        Ok(pool_id)
     }
 }

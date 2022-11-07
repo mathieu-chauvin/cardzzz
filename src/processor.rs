@@ -7,11 +7,14 @@ use solana_program::{
     program_pack::{IsInitialized, Pack},
     pubkey::Pubkey,
     sysvar::{rent::Rent, Sysvar},
+    sysvar::ID as SYSVAR_ID,
+    system_instruction,
 };
 
 use spl_token::state::Account as TokenAccount;
 
-use crate::{error::EscrowError, instruction::LoanInstruction, state::Loan};
+
+use crate::{constants::CONTROLLER, error::EscrowError, instruction::LoanInstruction, state::Loan};
 pub struct Processor;
 impl Processor {
     pub fn process(
@@ -26,20 +29,20 @@ impl Processor {
                 msg!("Instruction: InitLoan");
                 Self::process_init_loan(accounts, amount, program_id)
             },
-            LoanInstruction::LendLoan { } => {
-                msg!("Instruction: LendLoan");
-                Self::process_lend(accounts, program_id)
-            },
             LoanInstruction::RepayLoan { } => {
                 msg!("Instruction: RepayLoan");
                 Self::process_repay(accounts, program_id)
                 
             },
-            LoanInstruction::ClaimLoan { } => {
-                msg!("Instruction: ClaimLoan");
-                Self::process_claim(accounts, program_id)
+            LoanInstruction::WithdrawPool { pool_id } => {
+                msg!("Instruction: WithdrawPool");
+                Self::process_withdraw_pool(accounts, pool_id, program_id)
             
-            }
+            },
+            LoanInstruction::InitPool { pool_id } => {
+                msg!("Instruction: InitPool");
+                Self::process_init_pool(accounts, pool_id, program_id)
+            },
             
             
         }
@@ -54,8 +57,10 @@ impl Processor {
         let initializer = next_account_info(account_info_iter)?;
         let temp_token_account = next_account_info(account_info_iter)?;
         let loan_account = next_account_info(account_info_iter)?;
+        let pool_account = next_account_info(account_info_iter)?;
         let rent = &Rent::from_account_info(next_account_info(account_info_iter)?)?;
         let token_program = next_account_info(account_info_iter)?;
+        let system_program = next_account_info(account_info_iter)?;
         
         let mut loan_info = Loan::unpack_unchecked(&loan_account.try_borrow_data()?)?;
         
@@ -98,77 +103,28 @@ impl Processor {
             ],
         )?;
 
-        Ok(())
-    }
+        // get back the value of the loan
 
-    fn process_lend(
-        accounts: &[AccountInfo],
-        program_id: &Pubkey,
-    ) -> ProgramResult {
-        let account_info_iter = &mut accounts.iter();
-        let initializer = next_account_info(account_info_iter)?;
+        //get associated pool pda
+        //TODO : implement other pools ids according to card id
+        let pool_id:u8 = 0;
+        let (pool_pda, nonce) = Pubkey::find_program_address(&[b"pool",&[pool_id]], program_id);
 
-        if !initializer.is_signer {
-            return Err(ProgramError::MissingRequiredSignature);
+        // check pda
+        if (&pool_pda != pool_account.key) {
+            return Err(ProgramError::InvalidAccountData);
         }
 
-        let temp_token_account = next_account_info(account_info_iter)?;
+        //transfer 0.05 sol to the initializer
 
-        let token_to_receive_account = next_account_info(account_info_iter)?;
-        if *token_to_receive_account.owner != spl_token::id() {
-            return Err(ProgramError::IncorrectProgramId);
-        }
-
-        let loan_account = next_account_info(account_info_iter)?;
-        let rent = &Rent::from_account_info(next_account_info(account_info_iter)?)?;
-
-        if !rent.is_exempt(loan_account.lamports(), loan_account.data_len()) {
-            return Err(EscrowError::NotRentExempt.into());
-        }
-
-
-        let (pda, _nonce) = Pubkey::find_program_address(&[b"loan"], program_id);
-
-        
-
-        Ok(())
-    }
-
-
-    fn process_claim(
-        accounts: &[AccountInfo],
-        program_id: &Pubkey,
-    ) -> ProgramResult {
-
-        let account_info_iter = &mut accounts.iter();
-        let initializer = next_account_info(account_info_iter)?;
-
-        if !initializer.is_signer {
-            return Err(ProgramError::MissingRequiredSignature);
-        }
-
-        let temp_token_account = next_account_info(account_info_iter)?;
-
-        let token_to_receive_account = next_account_info(account_info_iter)?;
-        if *token_to_receive_account.owner != spl_token::id() {
-            return Err(ProgramError::IncorrectProgramId);
-        }
-
-        let loan_account = next_account_info(account_info_iter)?;
-        let rent = &Rent::from_account_info(next_account_info(account_info_iter)?)?;
-
-        if !rent.is_exempt(loan_account.lamports(), loan_account.data_len()) {
-            return Err(EscrowError::NotRentExempt.into());
-        }
-
-        //check if the loan has been over limit date
-        
-        let (pda, _nonce) = Pubkey::find_program_address(&[b"loan"], program_id);
+        **pool_account.try_borrow_mut_lamports()? -= 50000000 as u64;
+        **initializer.try_borrow_mut_lamports()? += 50000000 as u64;
 
 
         Ok(())
     }
 
+    
     fn process_repay(
         accounts: &[AccountInfo],
         program_id: &Pubkey,
@@ -180,7 +136,9 @@ impl Processor {
         let temp_token_account = next_account_info(account_info_iter)?;
         let token_to_receive_account = next_account_info(account_info_iter)?;
         let loan_account = next_account_info(account_info_iter)?;
+        let pool_account = next_account_info(account_info_iter)?;
         let rent = &Rent::from_account_info(next_account_info(account_info_iter)?)?;
+        let system_program = next_account_info(account_info_iter)?;
         let token_program = next_account_info(account_info_iter)?;
         let pda_account = next_account_info(account_info_iter)?;
 
@@ -189,6 +147,7 @@ impl Processor {
         if !initializer.is_signer {
             return Err(ProgramError::MissingRequiredSignature);
         }
+
 
         if !rent.is_exempt(loan_account.lamports(), loan_account.data_len()) {
             return Err(EscrowError::NotRentExempt.into());
@@ -202,33 +161,31 @@ impl Processor {
         if loan_info.temp_token_account_pubkey != *temp_token_account.key {
             return Err(EscrowError::InvalidTempTokenAccount.into());
         }
-        /*if *token_to_receive_account.owner != spl_token::id() {
-            return Err(ProgramError::IncorrectProgramId);
-        }*/
+
+
+        // check pool account pda
+        let pool_id:u8 = 0;
+        let (pool_pda, nonce) = Pubkey::find_program_address(&[b"pool",&[pool_id]], program_id);
+
+        if (&pool_pda != pool_account.key) {
+            return Err(ProgramError::InvalidAccountData);
+        }
 
 
         let (pda, nonce) = Pubkey::find_program_address(&[b"loan"], program_id);
 
-/*        let owner_change_ix = spl_token::instruction::set_authority(
-            token_program.key,
-            temp_token_account.key,
-            Some(initializer.key),
-            spl_token::instruction::AuthorityType::AccountOwner,
-            &pda,
-            &[&pda],
-        )?;
+        //transfer 0.05 sol to the initializer
 
-        msg!("Calling the token program to transfer token account ownership...");
-        invoke_signed(
-            &owner_change_ix,
-            &[
-                temp_token_account.clone(),
-                initializer.clone(),
-                token_program.clone(),
-                pda_account.clone(),
-            ],
-            &[&[&b"loan"[..], &[nonce]]],
-        )?;*/
+        let transferLamportsIx = system_instruction::transfer(
+            initializer.key,
+            pool_account.key,
+            55000000 as u64,
+        );
+
+        invoke(&transferLamportsIx, &[initializer.clone(), pool_account.clone(), system_program.clone()])?;
+
+        //**initializer.try_borrow_mut_lamports()? -= 5500000 as u64;
+        //**pool_account.try_borrow_mut_lamports()? += 5500000 as u64;
 
         let transfer_ix = spl_token::instruction::transfer(
             token_program.key,
@@ -265,5 +222,100 @@ impl Processor {
         Ok(())
     }
 
+    
+
+    fn process_init_pool(
+        accounts: &[AccountInfo],
+        pool_id: u8,
+        program_id: &Pubkey,
+    ) -> ProgramResult {
+
+        let account_info_iter = &mut accounts.iter();
+
+        let initializer = next_account_info(account_info_iter)?;
+        let pool_account = next_account_info(account_info_iter)?;
+        let rent_account = next_account_info(account_info_iter)?;
+        let rent = &Rent::from_account_info(rent_account)?;
+        let system_info = next_account_info(account_info_iter)?;
+
+        if !initializer.is_signer {
+            return Err(ProgramError::MissingRequiredSignature);
+        }
+
+        if initializer.key.to_bytes() != CONTROLLER {
+            return Err(EscrowError::InvalidController.into());
+        }
+
+        // create an account own by the program
+        let (pda, nonce) = Pubkey::find_program_address(&[b"pool", &[pool_id]], program_id);
+
+        if pda != *pool_account.key {
+            return Err(ProgramError::InvalidAccountData);
+        }
+        
+        // when we initialize the pool, we need to put at least 0.5 sol in the pool
+
+        let create_account_ix = system_instruction::create_account(
+            &initializer.key,
+            &pda,
+            rent.minimum_balance(5) + 500000000 as u64,
+            5,
+            &program_id,
+        );
+
+        //send the transaction to the chain
+
+        invoke_signed(
+            &create_account_ix,
+            &[
+                initializer.clone(),
+                pool_account.clone(),
+                rent_account.clone(),
+                system_info.clone(),
+
+                ],
+            &[&[&b"pool"[..], &[pool_id], &[nonce]]],
+        )?;
+        
+        Ok(())
+    }
+
+
+    fn process_withdraw_pool(
+        accounts: &[AccountInfo],
+        pool_id: u8,
+        program_id: &Pubkey,
+    ) -> ProgramResult {
+
+        let account_info_iter = &mut accounts.iter();
+        let initializer = next_account_info(account_info_iter)?;
+        let pool_account = next_account_info(account_info_iter)?;
+        
+
+
+        if initializer.key.to_bytes() != CONTROLLER {
+            return Err(EscrowError::InvalidController.into());
+        }
+
+        if !initializer.is_signer {
+            return Err(ProgramError::MissingRequiredSignature);
+        }
+
+        let (pda, nonce) = Pubkey::find_program_address(&[b"pool", &[pool_id]], program_id);
+
+        //check pda
+        if &pda != pool_account.key {
+            return Err(ProgramError::InvalidAccountData);
+        }
+
+        //transfer sol from the pool to the controller
+        **pool_account.try_borrow_mut_lamports()? = pool_account
+            .lamports()- 100000000 as u64;
+
+        **initializer.try_borrow_mut_lamports()? = initializer
+            .lamports() + 100000000 as u64;
+        
+        Ok(())
+    }
 
 }
