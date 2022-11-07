@@ -16,8 +16,59 @@ export const BackendPool = (props) => {
     const programId = new web3.PublicKey('FjJHbCgdMKSe5K6Xp9iksjJeWCdvz6KLbDN5xUE67RUm');
 
     const [rows, setRows] = useState([]);
+    const [idPoolInit, setIdPoolInit] = useState(0);
+    const [idPoolWithdraw, setIdPoolWithdraw] = useState(0);
     
-    
+   
+    async function initPool(poolId) {
+      
+      //get pda for pool account from poolId
+      const [poolAccount, bumpSeed] = await web3.PublicKey.findProgramAddress(
+        [Buffer.from('pool'), Buffer.from([poolId])],
+        programId
+      );
+
+      // call program init pool instyuction
+      const pool_init_ix = new web3.TransactionInstruction({
+        keys: [
+          { pubkey: wallet.publicKey, isSigner: true, isWritable: true },
+          { pubkey: poolAccount, isSigner: false, isWritable: true },
+          { pubkey: web3.SYSVAR_RENT_PUBKEY, isSigner: false, isWritable: false },
+          // system info account
+          { pubkey: web3.SystemProgram.programId, isSigner: false, isWritable: false },
+        ],
+        programId,
+        data: Buffer.from([4,poolId]), // create a random pool 
+      });
+     
+      const blockhash = await connection.getLatestBlockhash();
+      const tx = new web3.Transaction().add(pool_init_ix);
+      tx.recentBlockhash = blockhash.blockhash;
+      tx.feePayer = wallet.publicKey;
+      
+      const signed = await wallet.signTransaction(tx);
+      const txid = await connection.sendRawTransaction(signed.serialize());
+      const transactionConfirmationConfig = {
+        skipPreflight: false,
+        commitment: 'singleGossip',
+        preflightCommitment: 'singleGossip',
+      };
+      await connection.confirmTransaction(txid, transactionConfirmationConfig);
+      console.log('Pool created', txid);
+
+    }
+
+    async function withdrawPool(poolId) {
+    }
+
+    async function handleInitPool() {
+      await initPool(idPoolInit);
+    }
+
+    async function handleWithdrawPool() {
+      await withdrawPool(idPoolWithdraw);
+    }
+
     async function getPools() {
         //let myNfts = await metaplex.nfts().findAllByOwner(metaplex.identity().publicKey);
         
@@ -76,8 +127,8 @@ export const BackendPool = (props) => {
     return wallet.connected && (
       <div>
         
-           <input type="text" placeholder="ID" value={props.id} onChange={props.handleIdChange} />
-           <button onClick={props.handleInit}>Init</button> 
+           <input type="text" placeholder="ID" value={idPoolInit} onChange={(event) => setIdPoolInit(event.target.value)} />
+           <button onClick={handleInitPool}>Init</button> 
 
             <h4>Pool status</h4>
             <table>
@@ -97,8 +148,8 @@ export const BackendPool = (props) => {
                 </tbody>
             </table>
 
-           <input type="text" placeholder="ID" value={props.id} onChange={props.handleIdChange} />
-           <button onClick={props.handleWithdraw}>Withdraw</button> 
+           <input type="text" placeholder="ID" value={idPoolWithdraw} onChange={(event) => setIdPoolWithdraw(event.target.value)} />
+           <button onClick={handleWithdrawPool}>Withdraw</button> 
       </div>
     );
 };
