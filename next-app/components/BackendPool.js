@@ -56,9 +56,45 @@ export const BackendPool = (props) => {
       await connection.confirmTransaction(txid, transactionConfirmationConfig);
       console.log('Pool created', txid);
 
+      //refresh data
+      getPools();
     }
 
     async function withdrawPool(poolId) {
+
+      //get pda for pool account from poolId
+      const [poolAccount, bumpSeed] = await web3.PublicKey.findProgramAddress(
+        [Buffer.from('pool'), Buffer.from([poolId])],
+        programId
+      );
+
+      // call program init pool instyuction
+      const pool_init_ix = new web3.TransactionInstruction({
+        keys: [
+          { pubkey: wallet.publicKey, isSigner: true, isWritable: true },
+          { pubkey: poolAccount, isSigner: false, isWritable: true },
+        ],
+        programId,
+        data: Buffer.from([1,poolId]), // create a random pool 
+      });
+     
+      const blockhash = await connection.getLatestBlockhash();
+      const tx = new web3.Transaction().add(pool_init_ix);
+      tx.recentBlockhash = blockhash.blockhash;
+      tx.feePayer = wallet.publicKey;
+      
+      const signed = await wallet.signTransaction(tx);
+      const txid = await connection.sendRawTransaction(signed.serialize());
+      const transactionConfirmationConfig = {
+        skipPreflight: false,
+        commitment: 'singleGossip',
+        preflightCommitment: 'singleGossip',
+      };
+      await connection.confirmTransaction(txid, transactionConfirmationConfig);
+      console.log('Pool created', txid);
+
+      //refresh data
+      getPools();
     }
 
     async function handleInitPool() {
@@ -71,53 +107,34 @@ export const BackendPool = (props) => {
 
     async function getPools() {
         //let myNfts = await metaplex.nfts().findAllByOwner(metaplex.identity().publicKey);
-        
-          const programAccounts = await connection.getProgramAccounts(programId);
-          console.log(programAccounts);
+         let pools = [];
+          // for id from 0 to 10
+            for (let poolId = 0; poolId < 10; poolId++) {
+                // pool is a pda of the program id and the id
+                //const pool = await web3.PublicKey.findProgramAddress([Buffer.from('pool'), Buffer.from([i])], programId);
+                const [pool, bumpSeed] = await web3.PublicKey.findProgramAddress(
+                    [Buffer.from('pool'), Buffer.from([poolId])],
+                    programId
+                );// get the account info of the pool
+                const poolPkey = new web3.PublicKey(pool);
+                const poolAccount = await connection.getAccountInfo(poolPkey);
+                console.log(poolPkey.toBase58());
+                // if the account info is not null
+                if (poolAccount != null) {
+                  console.log(poolAccount);
+                  pools.push({
+                    poolId: poolId,
+                    lamports: poolAccount.lamports,
+                  });
+                }
+            }         
 
-          let offers = [];
-          let id = 0;
-
-          programAccounts.forEach(async (programAccount) => {
-              
-          });
-
-          setRows(offers);
-  
-          //programAccounts.forEach(async (programAccount) => {
+          setRows(pools);
       }
     
 
     useEffect(() => {
-      async function getOffers() {
-        //let myNfts = await metaplex.nfts().findAllByOwner(metaplex.identity().publicKey);
-        
-          const programAccounts = await connection.getProgramAccounts(programId);
-          console.log(programAccounts);
-
-          let offers = [];
-          let id = 0;
-
-          programAccounts.forEach(async (programAccount) => {
-              const offer = deserializeOffer(programAccount.account.data);
-
-              //TODO : adapt to other types of cards and interest
-              offers.push({id:id, 
-                nft:new web3.PublicKey(offer.temp_token_account_pubkey_dst).toBase58(), 
-                owner:new web3.PublicKey(offer.initializer_pubkey_dst).toBase58(), 
-                amount:new BN(offer.expected_amount_dst, 'le').toString(),
-                type_card:'BRONZE',
-                interest:2
-              });
-              id++;
-
-              
-          });
-
-          setRows(offers);
-  
-          //programAccounts.forEach(async (programAccount) => {
-      } 
+      
       getPools(); 
         
     },[]);
@@ -140,9 +157,9 @@ export const BackendPool = (props) => {
                 </thead>
                 <tbody>
                     {rows.map((row) => (
-                        <tr key={row.id}>
-                            <td>{row.id}</td>
-                            <td>{row.amount}</td>
+                        <tr key={row.poolId}>
+                            <td>{row.poolId}</td>
+                            <td>{row.lamports/1000000000} SOL</td>
                         </tr>
                     ))}
                 </tbody>
