@@ -74,16 +74,7 @@ export const ShowNFTs = (props) => {
       }
       return items;
     }
-/*
-<div className={styles.nftForm}>
-              <input
-                type="text"
-                value={nft ? nft.mint.toBase58() : ""}
-                readOnly
-              />
-            <button onClick={onClick}>Pick NFT</button>
-            </div>
-            */
+
 
     return connected && (
       <div>

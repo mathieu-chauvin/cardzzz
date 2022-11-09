@@ -15,7 +15,7 @@ export const ListOffers = (props) => {
     const { connection } = useConnection();
 
     const [rowsAL, setRowsAL] = useState([]);
-    const programId = new web3.PublicKey('9p1cABSykMyvAhUFCLoUvf4gAE89cgFUtah4m8QRr5Qq');
+    const programId = new web3.PublicKey('FjJHbCgdMKSe5K6Xp9iksjJeWCdvz6KLbDN5xUE67RUm');
 
     const [rows, setRows] = useState([]);
 

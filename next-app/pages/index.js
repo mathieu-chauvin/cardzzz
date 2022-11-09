@@ -43,7 +43,6 @@ export default function Home() {
   );
 
   const handleChange = (event) => {
-    console.log("hello");
     switch(event.target.value){
       case "devnet":
         setNetwork(WalletAdapterNetwork.Devnet);

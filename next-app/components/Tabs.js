@@ -10,11 +10,13 @@ import {ListReimbursments} from './ListReimbursments';
 
 import { ShowNFTs } from './ShowNFTs';
 import { StakeCard } from './StakeCard';
-import DataTable from './DataTable';
+import { BackendPool } from './BackendPool';
+import { useWallet } from '@solana/wallet-adapter-react';
 
 export const Tabs = (props) =>  {
 
     const [value, setValue] = useState('1');
+    const {publicKey, connected} = useWallet();
 
     const [nft, setNft] = useState(null);
 
@@ -33,6 +35,10 @@ export const Tabs = (props) =>  {
                     <Tab label="Borrow" value="1" />
                     <Tab label="Lend" value="2" />
                     <Tab label="Repayment" value="3" />
+                    {
+                      connected && publicKey.toBase58() == '5UYUT1WU9kaHg87ehWsRUfmnYceogbwoACiwAhTBkiiu' &&
+                      <Tab label="BackendPool" value="4" />
+                    }
                   </TabList>
                 </Box>
                 <TabPanel value="1">
@@ -48,7 +54,11 @@ export const Tabs = (props) =>  {
                 <TabPanel value="3">
                     <ListReimbursments/>
                 </TabPanel>
-               
+ 
+                <TabPanel value="4">
+                    <BackendPool/>
+                </TabPanel>
+          
               </TabContext>
             </Box>
     )
