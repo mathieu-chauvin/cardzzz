@@ -68,14 +68,16 @@ export default function Home() {
         <WalletModalProvider>
         <MetaplexProvider>
           <div className={styles.App}>
-            <h1>Solana credit cards</h1>
-           
-            <WalletMultiButton />
-            <select onChange={handleChange} className={styles.dropdown}>
-              <option value="devnet">Devnet</option>
-              <option value="mainnet">Mainnet</option>
-              <option value="testnet">Testnet</option>
-            </select>
+
+            <div className={styles.wallet_container}>
+              <WalletMultiButton />
+              <select onChange={handleChange} className={styles.dropdown}>
+                <option value="devnet">Devnet</option>
+                <option value="mainnet">Mainnet</option>
+                <option value="testnet">Testnet</option>
+              </select>
+            </div>
+
             <Tabs/>
             
           </div>
