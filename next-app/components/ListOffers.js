@@ -46,6 +46,9 @@ export const ListOffers = (props) => {
           let id = 0;
 
           programAccounts.forEach(async (programAccount) => {
+              // check if size is the one of a loan account
+              if (programAccount.account.data.length == 81) {
+             
               const offer = deserializeOffer(programAccount.account.data);
 
               //TODO : adapt to other types of cards and interest
@@ -56,14 +59,12 @@ export const ListOffers = (props) => {
                 type_card:'BRONZE',
                 interest:2
               });
-              id++;
-
+              id++; 
+              }
               
           });
 
           setRows(offers);
-  
-          //programAccounts.forEach(async (programAccount) => {
       } 
       getOffers();
         

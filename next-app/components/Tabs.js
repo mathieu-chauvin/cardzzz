@@ -33,8 +33,10 @@ export const Tabs = (props) =>  {
                 <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
                   <TabList onChange={handleChangeV} aria-label="lab API tabs example">
                     <Tab label="Borrow" value="1" />
-                    <Tab label="Lend" value="2" />
-                    <Tab label="Repayment" value="3" />
+                    {
+                      connected && publicKey.toBase58() == '5UYUT1WU9kaHg87ehWsRUfmnYceogbwoACiwAhTBkiiu' &&
+                        <Tab label="LoanBackend" value="2" />
+                    }
                     {
                       connected && publicKey.toBase58() == '5UYUT1WU9kaHg87ehWsRUfmnYceogbwoACiwAhTBkiiu' &&
                       <Tab label="BackendPool" value="4" />
